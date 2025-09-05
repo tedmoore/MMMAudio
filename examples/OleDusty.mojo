@@ -22,8 +22,10 @@ struct Dusty(Representable, Movable, Copyable):
         return String("OleDusty")
 
     fn next(mut self, freq: Float64) -> List[Float64]:
+
         zero(self.out) # zero the output
 
+        # [REVIEW TM] What are the chances we can get multichannel expansion?
         temp = self.dust.next(freq)
         temp2 = self.dust2.next(freq)
         # temp = self.dust.get_phase() * 0.2
@@ -33,6 +35,15 @@ struct Dusty(Representable, Movable, Copyable):
         self.out[1] = temp2
 
         return self.out
+
+        '''
+        [REVIEW TM]
+        As in ManyOscillators, I think I would prefer a function like below. I find it more readable.
+    
+        fn next(mut self, freq: Float64) -> List[Float64]:
+            return [self.dust.next(freq),self.dust2.next(freq)]
+
+        '''
 
 struct OleDusty(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]  

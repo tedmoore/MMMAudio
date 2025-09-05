@@ -25,6 +25,8 @@ struct Phasor(Representable, Movable, Copyable):
     fn increment_phase(mut self: Phasor, freq: Float64, os_index: Int = 0):
 
         self.phase += (freq * self.freq_mul * self.world_ptr[0].os_multiplier[os_index])
+
+        # [REVIEW TM] Is is possible that phase could ever become < -1 or > 2 because if so, your corrections here won't recover properly.
         if self.phase >= 1.0:
             self.phase -= 1.0
         elif self.phase < 0.0:
@@ -38,6 +40,8 @@ struct Phasor(Representable, Movable, Copyable):
         else:
             self.increment_phase(freq, os_index)
         self.last_trig = trig
+
+        # [REVIEW TM] Maybe the compiler will optimize away this concern but using wrap here inside a core ugen could be more efficient by hard coding it, especially since the range is 0.0-1.0
         return wrap(self.phase + phase_offset, 0.0, 1.0)  # Wrap phase to [0, 1) range
 
 struct Osc(Representable, Movable, Copyable):
@@ -46,6 +50,8 @@ struct Osc(Representable, Movable, Copyable):
     Osc is a swiss-army knive oscillator. It can utilize the 7 OscBuffers that are built into MMM (Sine, Triangle, Sawtooth, Square, Bandlimited Tri, Saw, Square) and can also load any waveform that can function as a wavetable. It can use linear interpolation, quadratic interpolation, or sinc interpolation. It also has oversampling up to 16x. Finally, it can interpolate between waveforms, creating a variable wavetable oscillator.
 
     """
+
+    # [REVIEW TM] "Finally, it can interpolate between waveforms, creating a variable wavetable oscillator." This is very smart and dope.
 
     var phasor: Phasor
     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
@@ -59,19 +65,23 @@ struct Osc(Representable, Movable, Copyable):
         self.sample = 0.0  # Initialize the sample
 
     fn __repr__(self) -> String:
-        return String(
-            "Osc"
-        )
+        return String("Osc")
 
     fn next(mut self: Osc, freq: Float64 = 100.0, phase_offset: Float64 = 0.0, trig: Float64 = 0.0, osc_type: Int64 = 0, interp: Int64 = 1, os_index: Int = 0) -> Float64:
+
+        # [REVIEW TM] I think this check should just happen in set_os_index because if you call set_os_index with the same index, it shouldn't do anything anyway! Better to put that protection there for *anytime* set_os_index is called.
         if self.oversampling.index != os_index:
             self.oversampling.set_os_index(os_index)
+
+        # [REVIEW TM] I'm curious why the oversampling doesn't happen in the Phasor since it's the core of Osc? I understand that Osc is the core of the oscillators but here it seems like you need to pass the oversampling strategy into Phasor and then handle it out here anyway? Does it have something to do with the selecting the interpolation strategy?
 
         for i in range(self.oversampling.times_os_int):
             var last_phase = self.phasor.phase  # Store the last phase for sinc interpolation
             var phase = self.phasor.next(freq, phase_offset, trig, self.oversampling.index)  # Update the phase
 
+            # [REVIEW TM] What are the interp integers? Doesn't Mojo have some kind of enum?
             if interp == 2:
+                # [REVIEW TM] These nested if statements are a bit much. Could the different function calls be indexed into with a map or maybe they just need to be broken out into different functions "nextLinearInterp" and "next____Interp" and then inside those "nextSinc" or whatever. I don't like that we go into a for loop and an if statement and then return *sometimes* but other times keep for looping. It feels too clever.
                 if self.oversampling.index == 0:
                     self.sample = self.world_ptr[0].osc_buffers.next_sinc(phase, last_phase, osc_type)  # If no oversampling, take the first sample directly
                     return self.sample
@@ -87,6 +97,8 @@ struct Osc(Representable, Movable, Copyable):
         return self.oversampling.get_sample()
 
     # next2 interpolates between N different buffers 
+    # [REVIEW TM] I think this needs a different name because I think I'm getting the next two samples...
+    # [REVIEW TM] It brings me so much joy that this functionality is native to MMMAudio and a core implementation for the concept of what an oscillator is.
     fn next2(mut self: Osc, freq: Float64 = 100.0, phase_offset: Float64 = 0.0, trig: Float64 = 0.0, osc_types: List[Int64] = [0,4,5,6], osc_frac: Float64 = 0.0, interp: Int64 = 0, os_index: Int = 0) -> Float64:
         var osc_type0 = Int64(Float64(len(osc_types)) * osc_frac)
         var osc_type1 = (osc_type0 + 1) % len(osc_types)
@@ -128,6 +140,8 @@ struct Osc(Representable, Movable, Copyable):
             var phase = self.phasor.next(freq, phase_offset)  # Update the phase
             self.sample = buffer.next(0, phase, interp)  # Get the next sample from the Oscillator buffer
         return self.sample
+
+# [REVIEW TM] I think the way you've encapsulated the different oscillators is fine, but they could probably have a superclass (or interface or trait or whatever is appropriate for Mojo) that inherits next and just has their own integer for the buffer. Again, does Mojo have enums? That would be preferable to integers.
 
 struct SinOsc (Representable, Movable, Copyable):
     """A sine wave oscillator."""
@@ -211,6 +225,7 @@ struct Impulse(Representable, Movable, Copyable):
             self.last_trig = trig  # Update last trigger state
             return 1.0  # Return impulse value
 
+        # [REVIEW TM] If the frequency can't be negative (because of the abs above), the phasor will only ever go up, so can't you just check if phase < last_phase?
         if abs(phase - self.last_phase) >= 0.5:  # Check for an impulse (crossing the 0.5 threshold)
             self.last_phase = phase 
             self.last_trig = trig 
@@ -238,13 +253,20 @@ struct Dust(Representable, Movable, Copyable):
         """Generate the next dust noise sample."""
         if trig > 0.0 and self.last_trig <= 0.0:
             self.last_trig = trig
+
+            # [REVIEW TM] Are these magic numbers (0.24 & 4) copying SuperCollider? Should MMMAudio let the user decide what the range should be?
             self.freq = random_exp_float64(freq*0.25, freq*4)  # Update frequency if trig is greater than 0.0
+
+            # [REVIEW TM] Since it's driven by a Phasor, I don't think it needs to only update the frequency if there is a trig, it could just continuously update the frequency. Might be nice to modulate the frequency of this and have your general density change, but without needing to fire in trigs all the time. A trig could reset the phase I suppose but doesn't seem necessary for "Dust"
+
             self.impulse.phasor.phase = 0.0  # Reset phase
             return random_float64(-1.0, 1.0)  # Return a random value between -1 and 1
         self.last_trig = trig
         var tick = self.impulse.next(self.freq)  # Update the phase
         if tick == 1.0:  # If an impulse is detected
             self.freq = random_exp_float64(freq*0.25, freq*4)
+
+            # [REVIEW TM] Not that it needs to replicate SuperCollider, but is this what Dust in SuperCollider returns?
             return random_float64(-1.0, 1.0)  # Return a random value between -1 and 1
         else:
             return 0.0  # Return zero if no impulse
@@ -271,7 +293,7 @@ struct LFNoise(Representable, Movable, Copyable):
         var tick = self.impulse.next(freq)  # Update the phase
         var sample: Float64
         if interp == 0:
-            sample = self.next_value  # Return the next value directly if no interpolation
+            sample = self.next_value  # Return the next value directly if no interpolation 
         elif interp == 1:
             # Linear interpolation between last and next value
             sample = self.impulse.phasor.phase * (self.next_value - self.last_value) + self.last_value

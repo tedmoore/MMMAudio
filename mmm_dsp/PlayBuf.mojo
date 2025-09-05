@@ -53,6 +53,9 @@ struct PlayBuf (Representable, Movable, Copyable):
 
         Arguments:
             buffer: The audio buffer to read from (can be Buffer or InterleavedBuffer).
+            
+            [REVIEW TM] Looking at the code, it looks like argument for rate is not actually Hz.
+
             rate: The playback rate (in Hz).
             loop: Whether to loop the buffer (default: True).
             trig: Trigger starts the synth at start_frame (default: 1.0).
@@ -87,6 +90,7 @@ struct PlayBuf (Representable, Movable, Copyable):
                 if self.impulse.phasor.phase >= self.reset_point:
                     self.impulse.phasor.phase -= self.reset_point
                 for i in range(self.num_chans):
+                    # [REVIEW TM] I don't like this method being .next. I tend to think about buffers as things that one would index into. Could this method be called something like just "get".
                     self.out_list[i] = buffer.next(i, self.impulse.phasor.phase + self.phase_offset, 1)  # Read the sample from the buffer at the current phase
             else:
                 var eor = self.impulse.next(freq, trig = trig)
@@ -138,6 +142,8 @@ struct Grain(Representable, Movable, Copyable):
 
     fn next[T: Buffable](mut self, mut buffer: T, trig: Float64 = 0.0, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.0, pan: Float64 = 0.0, gain: Float64 = 1.0) -> List[Float64]:
 
+        # [REVIEW TM] Since we can vary the playback rate of the grain, here it would be good to have an option for what kind of interpolation to use.
+
         if trig > 0.0 and self.last_trig <= 0.0:
             self.start_frame = start_frame
             self.end_frame =  start_frame + duration * buffer.get_buf_sample_rate()  # Calculate end frame based on duration
@@ -147,6 +153,7 @@ struct Grain(Representable, Movable, Copyable):
             self.gain = gain
             self.rate = rate
 
+            # [REVIEW TM] Is the [0] taking the left channel only? Is that your solution to not copying SuperCollider's TGrains functionality of "failing silently" if a non-mono buffer is provided? What about summing all the channels in the buffer? Or passing in an argument for which channel to use? That way one could "granulate" a multichannel buffer by just calling multiple granulators with a different channel argument for each.
             self.sample = self.play_buf.next(buffer, self.rate, False, trig, self.start_frame, self.end_frame)[0]  # Get samples from PlayBuf
         else:
             self.sample = self.play_buf.next(buffer, self.rate, False, 0.0, self.start_frame, self.end_frame)[0]  # Call next on PlayBuf with no trigger
@@ -157,6 +164,7 @@ struct Grain(Representable, Movable, Copyable):
         else:
             self.win_phase = 0.0  # Use the phase
 
+        # [REVIEW TM] I don't really like calling .next on the window. My gut says that the window is something that is indexed into. Also, it's nice to just have the World own the hann_window, but in the future a user might want to pass in their own envelope for a grain. Also, is there any concern here that than hann_window is fixed to 2048? Would it ever need to be bigger for bigger grains?
         var win = self.world_ptr[0].hann_window.next(0, self.win_phase, 0)
 
         self.sample = self.sample * win * self.gain  # Apply the window to the sample

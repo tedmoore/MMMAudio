@@ -4,6 +4,8 @@ from mmm_utils.functions import *
 from memory import Pointer
 from mmm_utils.Windows import build_sinc_table
 
+# [REVIEW TM] The sinc interpolation implementation is quite complex to follow. Renaming some variables and adding comments is going to help readability, which of course, facilitates maintenance in the long run.
+
 struct Sinc_Interpolator(Representable, Movable, Copyable):
     var ripples: Int64  # Number of ripples for sinc interpolation
     var table: List[Float64]  # Sinc table for interpolation
@@ -57,6 +59,8 @@ struct OscBuffers(Representable, Movable, Copyable):
         self.init_triangle()  # Initialize triangle wave buffer
         self.init_sawtooth()  # Initialize sawtooth wave buffer
         self.init_square()  # Initialize square wave buffer
+
+        # [REVIEW TM] Rather than "2" these could use more descriptive names.
         self.init_triangle2()  # Initialize triangle wave buffer using harmonics
         self.init_sawtooth2()  # Initialize sawtooth wave buffer using harmonics
         self.init_square2()  # Initialize square wave buffer using harmonics
@@ -133,21 +137,19 @@ struct OscBuffers(Representable, Movable, Copyable):
             self.buffers[6][i] = 4.0 / 3.141592653589793 * sample
 
     fn __repr__(self) -> String:
-        return String(
-            "OscBuffers(size=" + String(self.size) + ")"
-        )
+        return String("OscBuffers(size=" + String(self.size) + ")")
 
     fn quadratic_interp_loc(self, x: Float64, buf_num: Int64) -> Float64:
         # Ensure indices are within bounds
-        var mod_idx = Int64(x) % Int64(self.size)
-        var mod_idx1 = (mod_idx + 1) % Int64(self.size)
-        var mod_idx2 = (mod_idx + 2) % Int64(self.size)
+        var mod_idx0 = Int64(x) % Int64(self.size)
+        var mod_idx1 = (mod_idx0 + 1) % Int64(self.size)
+        var mod_idx2 = (mod_idx0 + 2) % Int64(self.size)
 
         # Get the fractional part
         var frac = x - Float64(Int64(x))
 
         # Get the 3 sample values
-        var y0 = self.buffers[buf_num][mod_idx]
+        var y0 = self.buffers[buf_num][mod_idx0]
         var y1 = self.buffers[buf_num][mod_idx1]
         var y2 = self.buffers[buf_num][mod_idx2]
 
@@ -170,11 +172,13 @@ struct OscBuffers(Representable, Movable, Copyable):
     # Get the next sample from the buffer using linear interpolation
     # Needs to receive an unsafe pointer to the buffer being used
     fn next_lin(self, phase: Float64, buf_num: Int64) -> Float64:
+        # [REVIEW TM] Could the phase ever be negative?
         var f_index = (phase * Float64(self.size)) % Float64(self.size)
         var value = self.lin_interp(f_index, buf_num)
         return value
 
     fn next_quadratic(self, phase: Float64, buf_num: Int64) -> Float64:
+        # [REVIEW TM] Could the phase ever be negative?
         var f_index = (phase * Float64(self.size)) % Float64(self.size)
         var value = self.quadratic_interp_loc(f_index, buf_num)
         return value
@@ -182,7 +186,10 @@ struct OscBuffers(Representable, Movable, Copyable):
     fn next_sinc(self, phase: Float64, last_phase: Float64, buf_num: Int64) -> Float64:
         # Sinc interpolation using the sinc table
         var phase_diff = phase - last_phase  # Calculate phase difference
+
+        # [REVIEW TM] Optimize by hardcoding this wrap here?
         var slope = wrap(phase_diff, -0.5, 0.5)  # Wrap phase difference to [-0.5, 0.5]
+        
         var samples_per_frame = abs(slope) * Float64(self.size)  # Calculate samples per frame based on slope
         var octave = max(0.0, log2(samples_per_frame))
         octave = min(octave, Float64(self.sinc_interpolator.sinc_power) - 2.0)  # Calculate octave
@@ -191,12 +198,17 @@ struct OscBuffers(Representable, Movable, Copyable):
         var sinc_crossfade: Float64 = octave - floor(octave)  # Calculate sinc crossfade
 
         if layer >= self.sinc_interpolator.sinc_power - 3:
+            
             layer = self.sinc_interpolator.sinc_power - 3  # Limit layer to a maximum of self.sinc_interpolator.sinc_power - 3
+
             sinc_crossfade = 0.0  # Set crossfade to 0 if layer exceeds self.sinc_interpolator.sinc_power - 3
+        
         var spacing1: Int64 = 2 ** layer
         var spacing2 = spacing1 * 2  # Calculate spacing for sinc interpolation
 
+        # [REVIEW TM] Can the phase ever be negative?
         var f_index = (phase * Float64(self.size)) % Float64(self.size)
+
         var index = Int64(f_index)  # Get the integer part of the index
         var frac = f_index - Float64(index)  # Get the fractional part
 
@@ -210,12 +222,14 @@ struct OscBuffers(Representable, Movable, Copyable):
     fn spaced_sinc(self, buf_num: Int64, index: Int64, frac: Float64, spacing: Int64) -> Float64:
         var sinc_mult: Int64 = self.sinc_interpolator.max_sinc_offset / spacing
 
-        # var out: Float64 = 0.0  # Initialize output value
         var out: Float64 = 0.0
 
         for sp in range(0, self.sinc_interpolator.ripples * 2):
             var loc_point = (index + (sp - self.sinc_interpolator.ripples + 1) * spacing) % self.size  # Calculate location point in the buffer
+            
+            # [REVIEW TM] This is some kind of juicy math operations going on here to get the values you want. It's not very reader friendly. Probably worth explaining.
             var spaced_point = (loc_point / spacing) * spacing
+
             var sinc_offset = loc_point - spaced_point  # Calculate sinc offset
 
             var sinc_value = self.sinc_interpolator.next(sp, sinc_offset, sinc_mult, frac)  # Get sinc value from the interpolator
@@ -225,9 +239,7 @@ struct OscBuffers(Representable, Movable, Copyable):
         return out  # Scale the sample by the sinc value
 
     fn next(self, phase: Float64, osc_type: Int64 = 0, interp: Int64 = 0) -> Float64:
-        if interp == 0:
-            return self.next_lin(phase, osc_type)  # Linear interpolation
-        elif interp == 1:
+        if interp == 1:
             return self.next_quadratic(phase, osc_type)  # Quadratic interpolation
         else:
             return self.next_lin(phase, osc_type)  # Default to linear interpolation

@@ -2,6 +2,8 @@ from math import pi, exp, sin, sqrt, cos
 from memory import memset_zero
 from python import Python
 
+# [REVIEW TM] If compilation time is significantly cut (even 1 second) by loading these tables rather than computing them, I think it would be worth it. I just don't know if it will. (I do think that in future versions of MMMAudio one might want to have higher oversampling, more sinc ripples etc. so it will be important to still make it possible to change a few integers somewhere and "recompile" the tables of desired size.)
+
 fn bessel_i0(x: Float64) -> Float64:
     """
     Calculate the modified Bessel function of the first kind, order 0 (I₀).

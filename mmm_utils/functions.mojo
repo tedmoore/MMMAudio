@@ -70,6 +70,7 @@ fn wrap(value: Float64, min_val: Float64, max_val: Float64) -> Float64:
         wrapped_value += range_size  # Ensure the value is within the range
     return wrapped_value
 
+# [REVIEW TM] Does Mojo have C++-style templates? These to fns are identical just with different <T>s.
 fn wrap(value: Int, min_val: Int, max_val: Int) -> Int:
     """Wraps a value around a specified range.
     Args:
@@ -121,6 +122,7 @@ fn cubic_interpolation(p0: Float64, p1: Float64, t: Float64) -> Float64:
         Interpolated value between p0 and p1
     """
     # Cubic smoothstep interpolation: 3t² - 2t³
+    # [REVIEW TM] This isn't actually cubic interpolation. I propose you use actual cubic interpolation (or at least rename this fn)
     var smooth_t = t * t * (3.0 - 2.0 * t)
     
     # Linear interpolation using the smooth parameter
@@ -176,6 +178,8 @@ fn mix(mut output: List[Float64], *lists: List[Float64]) -> None:
 #             if i < lst_size:
 #                 output[i] += lst[i]
 
+# [REVIEW TM] This is a pointer to an array of samples of unknown length, so we're using the len of the output buffer?...how are ensuring to not caus a buffer overflow? or that the lengths match? Should the len of *samples be passed in as well to assert matching lengths?
+# [REVIEW TM] Personally, I've never liked the word "Mix" here (assuming you're copying SuperCollider). To me it implies some kind of averaging or scaling down, which this doesn't do). I think "sum" or "add" would be clearer.
 fn mix(mut output: List[Float64], *samples: Float64) -> None:
     for i in range(len(output)):
         if i < len(samples):
@@ -203,6 +207,7 @@ fn zero(mut lst: List[Float64]) -> None:
     for i in range(len(lst)):
         lst[i] = 0.0  # Set each element to zero
 
+# [REVIEW TM] Fun name, but hard to read and users whose first language isn't english might not understand "zap" or "gremlins" so something like sanitize is more accessible to a broader community.
 fn zapgremlins(x: Float64) -> Float64:
         var absx = abs(x)
         # Avoid NaN or Inf values
@@ -217,6 +222,8 @@ fn postln[*Ts: Writable](
     Args:
         values: The elements to print.
     """
+
+    # [REVIEW TM] Why the randomness here?
     if random_float64() < 0.01:  # Print timestamp with a 1% chance
         @parameter
         for i in range(values.__len__()):
