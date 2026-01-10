@@ -1,30 +1,30 @@
 """Spectral Centroid Unit Test"""
 
-from mmm_dsp.Analysis import *
-from mmm_dsp.Buffer import *
-from mmm_dsp.PlayBuf import *
-from mmm_dsp.FFT import *
-from mmm_src.MMMWorld import MMMWorld
+.Analysis import *
+.Buffer_Module import *
+.Play import *
+.FFTs import *
+from .MMMWorld_Module import *
 
 alias windowsize: Int = 1024
 alias hopsize: Int = 512
 
 struct Analyzer(BufferedProcessable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var fft: RealFFT[windowsize]
     var centroids: List[Float64]
     var sample_rate: Float64
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], sample_rate: Float64):
-        self.world_ptr = world_ptr
+    fn __init__(out self, world: UnsafePointer[MMMWorld], sample_rate: Float64):
+        self.world = world
         self.fft = RealFFT[windowsize]()
         self.centroids = List[Float64]()
         self.sample_rate = sample_rate
 
     fn next_window(mut self, mut buffer: List[Float64]):
         self.fft.fft(buffer)
-        # Passing in the "self.sample_rate" here instead of using the world_ptr sample rate
-        # because the world_ptr was causing issues. Somehow the pointer was getting losses or something.
+        # Passing in the "self.sample_rate" here instead of using the world sample rate
+        # because the world was causing issues. Somehow the pointer was getting losses or something.
         val = SpectralCentroid.from_mags(self.fft.mags, self.sample_rate)
         self.centroids.append(val)
         return
@@ -32,11 +32,11 @@ struct Analyzer(BufferedProcessable):
 fn main():
     world = MMMWorld()
     world.sample_rate = 44100.0
-    world_ptr = UnsafePointer(to=world)
+    w = UnsafePointer(to=world)
 
-    buffer = Buffer("resources/Shiverer.wav")
-    playBuf = PlayBuf(world_ptr)
-    analyzer = BufferedInput[Analyzer,windowsize,hopsize,WindowTypes.hann](world_ptr, Analyzer(world_ptr,world.sample_rate))
+    buffer = Buffer.load("resources/Shiverer.wav")
+    playBuf = Play(self.world)
+    analyzer = BufferedInput[Analyzer,windowsize,hopsize,WindowType.hann](self.world, Analyzer(self.world,world.sample_rate))
 
     for _ in range(buffer.num_frames):
         sample = playBuf.next(buffer, 0, 1)

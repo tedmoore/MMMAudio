@@ -8,10 +8,10 @@ a WAV file using the YIN algorithm. The results can be compared to other impleme
 such as librosa in Python.
 """
 
-from mmm_dsp.Analysis import *
-from mmm_dsp.Buffer import *
-from mmm_dsp.PlayBuf import *
-from mmm_src.MMMWorld import MMMWorld
+.Analysis import *
+.Buffer_Module import *
+.Play import *
+from .MMMWorld_Module import *
 
 alias minfreq: Float64 = 100.0
 alias maxfreq: Float64 = 5000.0
@@ -19,14 +19,14 @@ alias windowsize: Int = 1024
 alias hopsize: Int = 512
 
 struct Analyzer(BufferedProcessable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var yin: YIN[windowsize, minfreq, maxfreq]
     var freqs: List[Float64]
     var confs: List[Float64]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.yin = YIN[windowsize, minfreq, maxfreq](world_ptr)
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
+        self.yin = YIN[windowsize, minfreq, maxfreq](self.world)
         self.freqs = List[Float64]()
         self.confs = List[Float64]()
 
@@ -37,14 +37,14 @@ struct Analyzer(BufferedProcessable):
         return
 
 fn main():
-    world = MMMWorld()
-    world_ptr = UnsafePointer(to=world)
+    w = MMMWorld()
+    world = UnsafePointer(to=w)
 
-    buffer = Buffer("resources/Shiverer.wav")
-    world.sample_rate = buffer.buf_sample_rate
-    playBuf = PlayBuf(world_ptr)
+    buffer = Buffer.load("resources/Shiverer.wav")
+    world[].sample_rate = buffer.sample_rate
+    playBuf = Play(world)
 
-    analyzer = BufferedInput[Analyzer,windowsize,hopsize](world_ptr, Analyzer(world_ptr))
+    analyzer = BufferedInput[Analyzer,windowsize,hopsize](world, Analyzer(world))
 
     for _ in range(buffer.num_frames):
         sample = playBuf.next(buffer, 0, 1)

@@ -1,15 +1,9 @@
-from mmm_src.MMMWorld import MMMWorld
-from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
-from mmm_dsp.Osc import Osc
-from mmm_dsp.Env import *
-from collections import Dict
-from mmm_utils.Messengers import *
+from mmm_audio import *
 
 struct ChowningFM(Representable, Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld] # pointer to the MMMWorld
+    var world: UnsafePointer[MMMWorld] # pointer to the MMMWorld
     var m: Messenger
-    var c_osc: Osc[1,0,1]  # Carrier oscillator
+    var c_osc: Osc[1,1,1]  # Carrier oscillator
     var m_osc: Osc  # Modulator oscillator
     var index_env: Env
     var index_env_params: EnvParams
@@ -19,14 +13,14 @@ struct ChowningFM(Representable, Movable, Copyable):
     var mfreq: Float64
     var vol: Float64
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.m = Messenger(world_ptr)
-        self.c_osc = Osc[1,0,1](world_ptr)
-        self.m_osc = Osc(world_ptr)
-        self.index_env = Env(world_ptr)
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
+        self.m = Messenger(self.world)
+        self.c_osc = Osc[1,1,1](self.world)
+        self.m_osc = Osc(self.world)
+        self.index_env = Env(self.world)
         self.index_env_params = EnvParams()
-        self.amp_env = Env(world_ptr)
+        self.amp_env = Env(self.world)
         self.amp_env_params = EnvParams()
         self.cfreq = 200.0
         self.mfreq = 100.0

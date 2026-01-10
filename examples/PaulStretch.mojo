@@ -1,12 +1,5 @@
-from mmm_src.MMMWorld import *
-from mmm_dsp.FFTProcess import *
-from mmm_utils.Messengers import Messenger
-from mmm_utils.Windows import WindowTypes
-from mmm_dsp.PlayBuf import PlayBuf
-from mmm_utils.functions import select
-from mmm_utils.functions import dbamp
-from complex import ComplexFloat64
-from mmm_dsp.Osc import LFSaw
+from mmm_audio import *
+
 from random import random_float64
 
 # this really should have a window size of 8192 or more, but the numpy FFT seems to barf on this
@@ -14,12 +7,12 @@ alias window_size = 2048
 alias hop_size = window_size // 2
 
 struct PaulStretchWindow[window_size: Int](FFTProcessable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var m: Messenger
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.m = Messenger(world_ptr)
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
+        self.m = Messenger(self.world)
 
     fn get_messages(mut self) -> None:
         pass
@@ -30,27 +23,27 @@ struct PaulStretchWindow[window_size: Int](FFTProcessable):
 
 # User's Synth
 struct PaulStretch(Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var buffer: Buffer
     var saw: LFSaw
-    var paul_stretch: FFTProcess[PaulStretchWindow[window_size],window_size,hop_size,WindowTypes.sine,WindowTypes.sine]
+    var paul_stretch: FFTProcess[PaulStretchWindow[window_size],window_size,hop_size,WindowType.sine,WindowType.sine]
     var m: Messenger
     var dur_mult: Float64
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.buffer = Buffer("resources/Shiverer.wav")
-        self.saw = LFSaw(self.world_ptr)
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
+        self.buffer = Buffer.load("resources/Shiverer.wav")
+        self.saw = LFSaw(self.world)
 
         self.paul_stretch = FFTProcess[
                 PaulStretchWindow[window_size],
                 window_size,
                 hop_size,
-                WindowTypes.sine,
-                WindowTypes.sine
-            ](self.world_ptr,process=PaulStretchWindow[window_size](self.world_ptr))
+                WindowType.sine,
+                WindowType.sine
+            ](self.world,process=PaulStretchWindow[window_size](self.world))
 
-        self.m = Messenger(world_ptr)
+        self.m = Messenger(self.world)
         self.dur_mult = 40.0
 
     fn next(mut self) -> SIMD[DType.float64,2]:

@@ -1,19 +1,19 @@
 """RMS Unit Test"""
 
-from mmm_dsp.Analysis import *
-from mmm_dsp.Buffer import *
-from mmm_dsp.PlayBuf import *
-from mmm_src.MMMWorld import MMMWorld
+.Analysis import *
+.Buffer_Module import *
+.Play import *
+from .MMMWorld_Module import *
 
 alias windowsize: Int = 1024
 alias hopsize: Int = 512
 
 struct Analyzer(BufferedProcessable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var rms_values: List[Float64]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
         self.rms_values = List[Float64]()
 
     fn next_window(mut self, mut buffer: List[Float64]):
@@ -23,13 +23,13 @@ struct Analyzer(BufferedProcessable):
 
 fn main():
     world = MMMWorld()
-    world_ptr = UnsafePointer(to=world)
+    w = UnsafePointer(to=world)
     world.sample_rate = 44100.0
 
-    buffer = Buffer("resources/Shiverer.wav")
-    playBuf = PlayBuf(world_ptr)
+    buffer = Buffer.load("resources/Shiverer.wav")
+    playBuf = Play(self.world)
 
-    analyzer = BufferedInput[Analyzer,windowsize,hopsize](world_ptr, Analyzer(world_ptr))
+    analyzer = BufferedInput[Analyzer,windowsize,hopsize](self.world, Analyzer(self.world))
 
     for _ in range(buffer.num_frames):
         sample = playBuf.next(buffer, 0, 1)
