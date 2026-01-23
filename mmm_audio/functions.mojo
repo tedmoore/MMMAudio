@@ -670,3 +670,248 @@ fn sign[num_chans:Int,//](x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float
     nmask:SIMD[DType.bool, num_chans] = x.lt(0.0)
 
     return pmask.select(SIMD[DType.float64, num_chans](1.0), nmask.select(SIMD[DType.float64, num_chans](-1.0), SIMD[DType.float64, num_chans](0.0)))
+
+fn linspace(start: Float64, stop: Float64, num: Int) -> List[Float64]:
+    """Create evenly spaced values between start and stop.
+    
+    Args:
+        start: The starting value.
+        stop: The ending value.
+        num: Number of samples to generate.
+    
+    Returns:
+        A List of Float64 values evenly spaced between start and stop.
+    """
+    var result = List[Float64](length=num, fill=0.0)
+    if num == 1:
+        result[0] = start
+        return result^
+    
+    var step = (stop - start) / Float64(num - 1)
+    for i in range(num):
+        result[i] = start + Float64(i) * step
+    return result^
+
+fn fft_frequencies(sr: Float64, n_fft: Int) -> List[Float64]:
+    """Compute the FFT bin center frequencies.
+
+    Args:
+        sr: The sample rate of the audio signal.
+        n_fft: The size of the FFT.
+
+    Returns:
+        A List of Float64 representing the center frequencies of each FFT bin.
+    """
+    # [TODO] test against: np.fft.rfftfreq(n=n_fft, d=1.0 / sr)
+    num_bins = (n_fft // 2) + 1
+    binHz = sr / Float64(n_fft)
+    freqs = List[Float64](length=num_bins, fill=0.0)
+    for i in range(num_bins):
+        freqs[i] = Float64(i) * binHz
+    return freqs^
+    
+fn mel_frequencies(n_mels: Int = 128, fmin: Float64 = 0.0, fmax: Float64 = 20000.0, htk: Bool = False) -> List[Float64]:
+    """Compute an array of acoustic frequencies tuned to the mel scale.
+
+    The mel scale is a quasi-logarithmic function of acoustic frequency
+    designed such that perceptually similar pitch intervals (e.g. octaves)
+    appear equal in width over the full hearing range.
+
+    Because the definition of the mel scale is conditioned by a finite number
+    of subjective psychoacoustical experiments, several implementations coexist
+    in the audio signal processing literature [#]_. By default, librosa replicates
+    the behavior of the well-established MATLAB Auditory Toolbox of Slaney [#]_.
+    According to this default implementation,  the conversion from Hertz to mel is
+    linear below 1 kHz and logarithmic above 1 kHz. Another available implementation
+    replicates the Hidden Markov Toolkit [#]_ (HTK) according to the following formula::
+
+        mel = 2595.0 * np.log10(1.0 + f / 700.0).
+
+    The choice of implementation is determined by the ``htk`` keyword argument: setting
+    ``htk=False`` leads to the Auditory toolbox implementation, whereas setting it ``htk=True``
+    leads to the HTK implementation.
+
+    .. [#] Umesh, S., Cohen, L., & Nelson, D. Fitting the mel scale.
+        In Proc. International Conference on Acoustics, Speech, and Signal Processing
+        (ICASSP), vol. 1, pp. 217-220, 1998.
+
+    .. [#] Slaney, M. Auditory Toolbox: A MATLAB Toolbox for Auditory
+        Modeling Work. Technical Report, version 2, Interval Research Corporation, 1998.
+
+    .. [#] Young, S., Evermann, G., Gales, M., Hain, T., Kershaw, D., Liu, X.,
+        Moore, G., Odell, J., Ollason, D., Povey, D., Valtchev, V., & Woodland, P.
+        The HTK book, version 3.4. Cambridge University, March 2009.
+
+    Parameters
+    ----------
+    n_mels : Int > 0 [scalar]
+        Number of mel bins.
+    fmin : Float64 >= 0 [scalar]
+        Minimum frequency (Hz).
+    fmax : Float64 >= 0 [scalar]
+        Maximum frequency (Hz).
+    htk : Bool
+        If True, use HTK formula to convert Hz to mel.
+        Otherwise (False), use Slaney's Auditory Toolbox.
+
+    Returns
+    -------
+    bin_frequencies : ndarray [shape=(n_mels,)]
+        Vector of ``n_mels`` frequencies in Hz which are uniformly spaced on the Mel
+        axis.
+
+    Examples
+    --------
+    >>> librosa.mel_frequencies(n_mels=40)
+    array([     0.   ,     85.317,    170.635,    255.952,
+              341.269,    426.586,    511.904,    597.221,
+              682.538,    767.855,    853.173,    938.49 ,
+             1024.856,   1119.114,   1222.042,   1334.436,
+             1457.167,   1591.187,   1737.532,   1897.337,
+             2071.84 ,   2262.393,   2470.47 ,   2697.686,
+             2945.799,   3216.731,   3512.582,   3835.643,
+             4188.417,   4573.636,   4994.285,   5453.621,
+             5955.205,   6502.92 ,   7101.009,   7754.107,
+             8467.272,   9246.028,  10096.408,  11025.   ])
+
+    """
+    # 'Center freqs' of mel bands - uniformly spaced between limits
+    # https://github.com/librosa/librosa/blob/e403272fc984bc4aeb316e5f15899042224bb9fe/librosa/core/convert.py#L1648
+    # [TODO] test against: librosa.mel_frequencies(n_mels=40)
+    min_mel = hz_to_mel(fmin, htk=htk)
+    max_mel = hz_to_mel(fmax, htk=htk)
+
+    mels = linspace(min_mel, max_mel, n_mels)
+
+    var hz = List[Float64](length=n_mels, fill=0.0)
+    for i in range(n_mels):
+        hz[i] = mel_to_hz(mels[i], htk=htk)
+    return hz^
+
+fn hz_to_mel[num_chans: Int = 1](freq: SIMD[DType.float64,num_chans], htk: SIMD[DType.bool,num_chans] = False) -> SIMD[DType.float64,num_chans]:
+# https://github.com/librosa/librosa/blob/e403272fc984bc4aeb316e5f15899042224bb9fe/librosa/core/convert.py#L1180C1-L1234C16
+    """Convert Hz to Mels
+
+    Examples
+    --------
+    >>> librosa.hz_to_mel(60)
+    0.9
+    >>> librosa.hz_to_mel([110, 220, 440])
+    array([ 1.65,  3.3 ,  6.6 ])
+
+    Parameters
+    ----------
+    freq : Float64
+        scalar or array of frequencies
+    htk : bool
+        use HTK formula instead of Slaney
+
+    Returns
+    -------
+    mels : number or np.ndarray [shape=(n,)]
+        input frequencies in Mels
+
+    See Also
+    --------
+    mel_to_hz
+    """
+
+    if htk:
+        return 2595.0 * log10(1.0 + freq / 700.0)
+
+    # Fill in the linear part
+    f_min = 0.0
+    f_sp = 200.0 / 3
+
+    mels = (freq - f_min) / f_sp
+
+    # Fill in the log-scale part
+
+    min_log_hz = 1000.0  # beginning of log region (Hz)
+    min_log_mel = (min_log_hz - f_min) / f_sp  # same (Mels)
+    logstep = log(6.4) / 27.0  # step size for log region
+
+    if freq >= min_log_hz:
+        # If we have scalar data, heck directly
+        mels = min_log_mel + log(freq / min_log_hz) / logstep
+
+    return mels
+
+fn mel_to_hz[num_chans: Int = 1](mel: SIMD[DType.float64,num_chans], htk: SIMD[DType.bool,num_chans] = False) -> SIMD[DType.float64,num_chans]:
+# https://github.com/librosa/librosa/blob/e403272fc984bc4aeb316e5f15899042224bb9fe/librosa/core/convert.py#L1254C1-L1307C1
+    """Convert mel bin numbers to frequencies
+
+    Examples
+    --------
+    >>> librosa.mel_to_hz(3)
+    200.
+
+    >>> librosa.mel_to_hz([1,2,3,4,5])
+    array([  66.667,  133.333,  200.   ,  266.667,  333.333])
+
+    Parameters
+    ----------
+    mels : Float64
+        mel bins to convert
+    htk : bool
+        use HTK formula instead of Slaney
+
+    Returns
+    -------
+    frequencies : np.ndarray [shape=(n,)]
+        input mels in Hz
+
+    See Also
+    --------
+    hz_to_mel
+    """
+
+    if htk:
+        return 700.0 * (10.0 ** (mel / 2595.0) - 1.0)
+
+    # Fill in the linear scale
+    f_min = 0.0
+    f_sp = 200.0 / 3
+    freq = f_min + f_sp * mel
+
+    # And now the nonlinear scale
+    min_log_hz = 1000.0  # beginning of log region (Hz)
+    min_log_mel = (min_log_hz - f_min) / f_sp  # same (Mels)
+    logstep = log(6.4) / 27.0  # step size for log region
+
+    if mel >= min_log_mel:
+        # If we have scalar data, check directly
+        freq = min_log_hz * exp(logstep * (mel - min_log_mel))
+
+    return freq
+
+fn diff(arr: List[Float64]) -> List[Float64]:
+    """Compute differences between consecutive elements.
+    
+    Args:
+        arr: Input list of Float64 values.
+    
+    Returns:
+        A new list with length len(arr) - 1 containing differences.
+    """
+    var result = List[Float64](length=len(arr) - 1, fill=0.0)
+    for i in range(len(arr) - 1):
+        result[i] = arr[i + 1] - arr[i]
+    return result^
+
+fn subtract_outer(a: List[Float64], b: List[Float64]) -> List[List[Float64]]:
+    """Compute outer subtraction: a[i] - b[j] for all i, j.
+    
+    Args:
+        a: First input list (will be rows).
+        b: Second input list (will be columns).
+    
+    Returns:
+        A 2D list where result[i][j] = a[i] - b[j].
+    """
+    var result = List[List[Float64]](length=len(a), fill=List[Float64]())
+    for i in range(len(a)):
+        result[i] = List[Float64](length=len(b), fill=0.0)
+        for j in range(len(b)):
+            result[i][j] = a[i] - b[j]
+    return result^
