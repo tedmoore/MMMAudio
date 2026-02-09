@@ -60,7 +60,6 @@ librosa_results = librosa.feature.mfcc(
 	fmin=min_freq,
 	fmax=max_freq,
 	center=False,
-	power=1.0,
 	dct_type=2,
 	norm="ortho",
 )

@@ -1,4 +1,5 @@
 var dir = thisProcess.nowExecutingPath.dirname;
+s.options.sampleRate = 44100;
 s.waitForBoot{
 
 	var windowsize = 1024;
