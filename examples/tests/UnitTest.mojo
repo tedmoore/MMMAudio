@@ -87,7 +87,7 @@ def test_dct():
     dct = DCT[4,3]()
     input_vals = List[Float64]([1.0, 2.0, 3.0, 4.0])
     output_vals = List[Float64](length=3, fill=0.0)
-    dct.apply(input_vals, output_vals)
+    dct.process(input_vals, output_vals)
 
     expected = List[Float64]([5.0, -2.230442497387663, -6.280369834735101e-16])
     for i in range(len(output_vals)):

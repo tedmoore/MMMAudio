@@ -65,7 +65,7 @@ def mel_bands_weights_results(n_mels: int, n_fft: int, sr: int):
                 f.write(f"{mel_weights[row][col]}\n")
                 
 def dct_results():
-    dct = scipy.fft.dct(np.array([1.0, 2.0, 3.0, 4.0]),type=2, n=3, norm=None).tolist()
+    dct = scipy.fft.dct(np.array([1.0, 2.0, 3.0, 4.0]),type=2, norm="ortho").tolist()
 
     print("DCT results:")
     print("input: [1.0, 2.0, 3.0, 4.0]")
@@ -73,10 +73,10 @@ def dct_results():
 
 
 if __name__ == "__main__":
-    mel_to_hz_librosa_results()
-    np_linspace_results()
-    mel_frequencies_results()
-    fft_frequencies_results()
-    make_mel_bands_weights_files()
-    mel_bands_weights_results(40, 512, 44100)
+    # mel_to_hz_librosa_results()
+    # np_linspace_results()
+    # mel_frequencies_results()
+    # fft_frequencies_results()
+    # make_mel_bands_weights_files()
+    # mel_bands_weights_results(40, 512, 44100)
     dct_results()

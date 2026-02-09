@@ -461,11 +461,13 @@ struct MFCC[num_coeffs: Int = 13, num_bands: Int = 40, min_freq: Float64 = 20.0,
 
     var world: World
     var mel_bands: MelBands[Self.num_bands, Self.min_freq, Self.max_freq, Self.fft_size]
+    var dct: DCT[Self.num_bands, Self.num_coeffs]
     var coeffs: List[Float64]
 
     fn __init__(out self, world: World):
         self.world = world
         self.mel_bands = MelBands[Self.num_bands, Self.min_freq, Self.max_freq, Self.fft_size](world)
+        self.dct = DCT[Self.num_bands, Self.num_coeffs]()
         self.coeffs = List[Float64](length=Self.num_coeffs, fill=0.0)
 
     fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
@@ -480,6 +482,10 @@ struct MFCC[num_coeffs: Int = 13, num_bands: Int = 40, min_freq: Float64 = 20.0,
             phases: The input phases as a List of Float64.
         """
         self.mel_bands.from_mags(mags)
+        for i in range(len(self.mel_bands.bands)):
+            self.mel_bands.bands[i] = log(max(self.mel_bands.bands[i], 1e-12))
+        self.dct.process(self.mel_bands.bands, self.coeffs)
+
 
 struct DCT[input_size: Int, output_size: Int](Movable,Copyable):
     """Compute the Discrete Cosine Transform (DCT)."""
@@ -490,7 +496,7 @@ struct DCT[input_size: Int, output_size: Int](Movable,Copyable):
         self.weights = List[List[Float64]](length=Self.output_size, fill=List[Float64](length=Self.input_size, fill=0.0))
         self.make_weights()
 
-    fn apply(mut self, ref input: List[Float64], mut output: List[Float64]) -> None:
+    fn process(mut self, ref input: List[Float64], mut output: List[Float64]) -> None:
         """Compute the first `output_size` DCT-II coefficients for `input`.
 
         Args:
