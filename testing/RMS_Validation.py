@@ -22,8 +22,6 @@ os.makedirs("testing/validation_results", exist_ok=True)
 os.makedirs("testing/mojo_results", exist_ok=True)
 os.makedirs("testing/flucoma_sc_results", exist_ok=True)
 
-from mmm_python import *
-
 os.system("mojo run testing/RMS_Validation.mojo")
 print("mojo analysis complete")
 
@@ -76,14 +74,14 @@ except Exception as e:
     print("Error reading FluCoMa results:", e)
 
 mean_dev_librosa, std_dev_librosa = compare_analyses(mojo_rms, librosa_rms)
-print(f"MMMAudio vs Librosa RMS: Mean Deviation = {ampdb(float(mean_dev_librosa)):.2f} dB, Std Dev = {ampdb(float(std_dev_librosa)):.2f} dB")
+print(f"MMMAudio vs Librosa RMS: Mean Deviation = {float(mean_dev_librosa)} dB, Std Dev = {float(std_dev_librosa)} dB")
 
 try:
     mean_dev_flucoma, std_dev_flucoma = compare_analyses(mojo_rms, sclang_rms)
-    print(f"MMMAudio vs FluCoMa RMS: Mean Deviation = {ampdb(float(mean_dev_flucoma)):.2f} dB, Std Dev = {ampdb(float(std_dev_flucoma)):.2f} dB")
+    print(f"MMMAudio vs FluCoMa RMS: Mean Deviation = {float(mean_dev_flucoma)} dB, Std Dev = {float(std_dev_flucoma)} dB")
     
     mean_dev_lib_flu, std_dev_lib_flu = compare_analyses(librosa_rms, sclang_rms)
-    print(f"Librosa vs FluCoMa RMS: Mean Deviation = {ampdb(float(mean_dev_lib_flu)):.2f} dB, Std Dev = {ampdb(float(std_dev_lib_flu)):.2f} dB")
+    print(f"Librosa vs FluCoMa RMS: Mean Deviation = {float(mean_dev_lib_flu)} dB, Std Dev = {float(std_dev_lib_flu)} dB")
 except Exception as e:
     print("Error comparing FluCoMa results:", e)
 
