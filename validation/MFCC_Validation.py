@@ -21,7 +21,7 @@ try:
 except Exception as e:
 	print("Error running SuperCollider script (make sure `sclang` can be called from the Terminal):", e)
 
-with open("validation/outputs/mfcc_mojo_results.csv", "r") as f:
+with open("validation/mfcc_mojo_results.csv", "r") as f:
 	lines = f.readlines()
 
 	windowsize = int(lines[0].strip().split(",")[1])
@@ -37,7 +37,7 @@ with open("validation/outputs/mfcc_mojo_results.csv", "r") as f:
 		if row:
 			mojo_results.append(row)
 
-with open("validation/outputs/mfcc_flucoma_results.csv", "r") as f:
+with open("validation/mfcc_flucoma_results.csv", "r") as f:
 	reader = csv.reader(f)
 	flucoma_results = []
 	for row in reader:

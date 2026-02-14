@@ -10,13 +10,13 @@ os.system("sclang ./validation/MelBands_Validation.scd")
 
 os.system("mojo run ./validation/MelBands_Validation.mojo")
 
-with open("./validation/outputs/mel_bands_flucoma.csv", "r") as f:
+with open("./validation/mel_bands_flucoma.csv", "r") as f:
     reader = csv.reader(f)
     flucoma_results = []
     for row in reader:
         flucoma_results.append([float(value) for value in row])
         
-with open("./validation/outputs/mel_bands_mojo.csv", "r") as f:
+with open("./validation/mel_bands_mojo.csv", "r") as f:
     reader = csv.reader(f)
     mojo_results = []
     for row in reader:

@@ -15,7 +15,7 @@ sys.path.append(os.getcwd())
 os.system("mojo run validation/SpectralCentroid_Validation.mojo")
 print("mojo analysis complete")
 
-with open("validation/outputs/spectral_centroid_mojo_results.csv", "r") as f:
+with open("validation/spectral_centroid_mojo_results.csv", "r") as f:
     lines = f.readlines()
     windowsize = int(lines[0].strip().split(",")[1])
     hopsize = int(lines[1].strip().split(",")[1])
@@ -65,7 +65,7 @@ plt.plot(mojo_centroids, label="MMMAudio Spectral Centroid", alpha=0.7)
 plt.plot(librosa_centroids, label="librosa Spectral Centroid", alpha=0.7)
 
 try:
-    with open("validation/outputs/spectral_centroid_flucoma_results.csv", "r") as f:
+    with open("validation/spectral_centroid_flucoma_results.csv", "r") as f:
         lines = f.readlines()
         sclang_centroids = []
         for line in lines:
@@ -91,5 +91,5 @@ try:
 except Exception as e:
     print("Error comparing FluCoMa results:", e)
 
-plt.savefig("validation/outputs/spectral_centroid_comparison.png")
+plt.savefig("validation/spectral_centroid_comparison.png")
 plt.show()

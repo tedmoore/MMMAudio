@@ -17,7 +17,7 @@ from .functions import ampdb
 os.system("mojo run validation/RMS_Validation.mojo")
 print("mojo analysis complete")
 
-with open("validation/outputs/rms_mojo_results.csv", "r") as f:
+with open("validation/rms_mojo_results.csv", "r") as f:
     lines = f.readlines()
     windowsize = int(lines[0].strip().split(",")[1])
     hopsize = int(lines[1].strip().split(",")[1])
@@ -53,7 +53,7 @@ plt.plot(mojo_rms, label="MMMAudio RMS", alpha=0.7)
 plt.plot(librosa_rms, label="librosa RMS", alpha=0.7)
 
 try:
-    with open("validation/outputs/rms_flucoma_results.csv", "r") as f:
+    with open("validation/rms_flucoma_results.csv", "r") as f:
         lines = f.readlines()
         sclang_rms = []
         for line in lines:
@@ -79,5 +79,5 @@ except Exception as e:
 plt.legend()
 plt.ylabel("Amplitude")
 plt.title("RMS Comparison")
-plt.savefig("validation/outputs/rms_comparison.png")
+plt.savefig("validation/rms_comparison.png")
 plt.show()
