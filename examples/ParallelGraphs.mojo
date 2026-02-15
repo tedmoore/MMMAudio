@@ -1,6 +1,6 @@
 from mmm_audio import *
 
-struct Default_Synth(Representable, Movable, Copyable):
+struct ParallelGraphs(Representable, Movable, Copyable):
     var world: World  
     var osc: Osc[1,Interp.sinc,1]
     var filt: SVF[1]
@@ -28,21 +28,3 @@ struct Default_Synth(Representable, Movable, Copyable):
         osc2 = pan2(osc, self.pan)
 
         return osc2 * 0.3
-
-
-# there can only be one graph in an MMMAudio instance
-# a graph can have as many synths as you want
-struct DefaultGraph(Representable, Movable, Copyable):
-    var world: World
-    var synth: Default_Synth
-
-    fn __init__(out self, world: World):
-        self.world = world
-        self.synth = Default_Synth(self.world)
-
-    fn __repr__(self) -> String:
-        return String("Default_Graph")
-
-    fn next(mut self) -> MFloat[2]:
-
-        return self.synth.next()  # Get the next sample from the synth

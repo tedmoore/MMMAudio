@@ -1,6 +1,6 @@
 from mmm_audio import *
 
-struct BufSynth(Representable, Movable, Copyable):
+struct BufSynth(Movable, Copyable):
     var world: World 
     var buffer: Buffer
 
@@ -34,7 +34,7 @@ struct BufSynth(Representable, Movable, Copyable):
 
         self.messenger = Messenger(self.world)
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         self.messenger.update(self.lpf_freq, "lpf_freq")
         self.messenger.update(self.play_rate, "play_rate")
 
@@ -44,22 +44,15 @@ struct BufSynth(Representable, Movable, Copyable):
         out = self.moog.next(out, freq, 1.0)
         return out
 
-    fn __repr__(self) -> String:
-        return String("BufSynth")
-
-
-struct PlayExample(Representable, Movable, Copyable):
+struct PlayExample(Movable, Copyable):
     var world: World
 
-    var buf_synth: BufSynth  # Instance of the GrainSynth
+    var buf_synth: BufSynth  # Instance of the BufSynth
 
     fn __init__(out self, world: World):
         self.world = world
 
         self.buf_synth = BufSynth(self.world)  
 
-    fn __repr__(self) -> String:
-        return String("PlayExample")
-
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         return self.buf_synth.next()  # Return the combined output sample
