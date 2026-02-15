@@ -27,15 +27,19 @@ jobs:
         run: |
           pip install librosa numpy matplotlib scipy
 
-      - name: Make Directory for Results
+      - name: Create Librosa Results for Testing Against
         run: |
-          mkdir -p examples/tests/results_for_testing_against
+          python testing/librosa_results_for_testing_against.py
 
-      - name: Create Results for Testing Against
-        run: |
-          python examples/tests/results_for_testing_against.py
-
-      - name: Run UnitTest.mojo
+      - name: Run UnitTests.mojo
         id: run-tests
         run: |
-          mojo examples/tests/UnitTest.mojo
+          mojo testing/UnitTests.mojo
+
+      - name: Test Building Mojo Files
+        run: |
+          python testing/test_build_mojo_files.py
+        
+      - name: Validate Against Snapshots
+        run: |
+          python testing/validate_against_snapshot.py
