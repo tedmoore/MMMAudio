@@ -35,7 +35,7 @@ struct Analyzer(BufferedProcessable):
 
 fn main():
     w = MMMWorld()
-    world = LegacyUnsafePointer(to=w)
+    world = UnsafePointer(to=w)
 
     buffer = Buffer.load("resources/Shiverer.wav")
     world[].sample_rate = buffer.sample_rate

@@ -100,7 +100,7 @@ def test_mfcc_paths_consistency():
     comptime num_coeffs: Int = 4
 
     world = MMMWorld(sample_rate=48000.0)
-    w = LegacyUnsafePointer(to=world)
+    w = UnsafePointer(to=world)
 
     mags = List[Float64](length=(fft_size // 2) + 1, fill=0.0)
     phases = List[Float64](length=(fft_size // 2) + 1, fill=0.0)

@@ -110,6 +110,7 @@ struct Messenger(Copyable, Movable):
             param: A `Float64` variable to be updated.
             name: A `String` to identify the Float64 sent from Python.
         """
+        
         if self.world[].top_of_block:
             try:
                 var opt = self.world[].messengerManager.get_float(self.get_name_with_namespace(name)[])

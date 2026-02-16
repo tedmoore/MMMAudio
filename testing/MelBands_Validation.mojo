@@ -8,7 +8,7 @@ struct MelBandsTestSuite(FFTProcessable):
     var melbands: MelBands[num_bands=nbands,min_freq=20.0,max_freq=20000.0,fft_size=fftsize]
     var data: List[List[Float64]]
 
-    fn __init__(out self, w: LegacyWorld):
+    fn __init__(out self, w: World):
         self.melbands = MelBands[num_bands=nbands,min_freq=20.0,max_freq=20000.0,fft_size=fftsize](w)
         self.data = List[List[Float64]]()
 
@@ -18,7 +18,7 @@ struct MelBandsTestSuite(FFTProcessable):
 
 def main():
     world = MMMWorld(sample_rate=44100)
-    w = LegacyUnsafePointer(to=world)
+    w = UnsafePointer(to=world)
     mbts = MelBandsTestSuite(w)
     fftprocess = FFTProcess[MelBandsTestSuite,fftsize,hopsize,WindowType.hann](w,mbts^)
     buf = Buffer.load("resources/Shiverer.wav")
