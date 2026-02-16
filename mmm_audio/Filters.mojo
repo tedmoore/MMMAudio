@@ -145,11 +145,11 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
 
     @doc_private
     @always_inline
-    fn _compute_coefficients[filter_type: Int64](self, frequency: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans], gain_db: SIMD[DType.float64, self.num_chans]) -> (SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans]):
-        """Compute filter coefficients based on type and parameters.
+    fn _compute_coeficients[filter_type: Int64](self, frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans], gain_db: SIMD[DType.float64, Self.num_chans]) -> Tuple[SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans]]:
+        """Compute filter coeficients based on type and parameters.
         
         Parameters:
-            filter_type: The type of filter to compute coefficients for.
+            filter_type: The type of filter to compute coeficients for.
 
         Args:
             frequency: The cutoff/center frequency of the filter.
@@ -182,15 +182,15 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         else:
             k = 1.0 / q
         
-        # Get mix coefficients based on filter type
-        var mix_coefs = self._get_mix_coefficients[filter_type](k, A)
+        # Get mix coeficients based on filter type
+        var mix_coefs = self._get_mix_coeficients[filter_type](k, A)
         
         return (g, k, mix_coefs[0], mix_coefs[1], mix_coefs[2])
 
     @doc_private
     @always_inline
-    fn _get_mix_coefficients[filter_type: Int64](self, k: SIMD[DType.float64, num_chans], A: SIMD[DType.float64, self.num_chans]) -> (SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans]):
-        """Get mixing coefficients for different filter types"""
+    fn _get_mix_coeficients[filter_type: Int64](self, k: SIMD[DType.float64, Self.num_chans], A: SIMD[DType.float64, Self.num_chans]) -> Tuple[SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans]]:
+        """Get mixing coeficients for different filter types"""
         
         mc0 = SIMD[DType.float64, Self.num_chans](1.0)
         mc1 = SIMD[DType.float64, Self.num_chans](0.0)
@@ -240,7 +240,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
             The next sample of the filtered output.
         """
         
-        var coefs = self._compute_coefficients[filter_type](frequency, q, gain_db)
+        var coefs = self._compute_coeficients[filter_type](frequency, q, gain_db)
         var g = coefs[0]
         var k = coefs[1]
         var mix_a = coefs[2]
@@ -1037,7 +1037,7 @@ fn tf2s[num_chans: Int = 1](coeffs: List[SIMD[DType.float64, num_chans]], mut co
     coeffs_out[3] = a1d
     coeffs_out[4] = a2d
 
-    @doc_private
+@doc_private
 struct BiquadModes:
     """Enumeration of different Biquad Filter modes.
 
