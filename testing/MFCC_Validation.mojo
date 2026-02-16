@@ -11,7 +11,7 @@ struct MFCCTestSuite(FFTProcessable):
     var mfcc: MFCC[num_coeffs=num_coeffs,num_bands=num_bands,min_freq=min_freq,max_freq=max_freq,fft_size=fftsize]
     var data: List[List[Float64]]
 
-    fn __init__(out self, w: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, w: LegacyWorld):
         self.mfcc = MFCC[num_coeffs=num_coeffs,num_bands=num_bands,min_freq=min_freq,max_freq=max_freq,fft_size=fftsize](w)
         self.data = List[List[Float64]]()
 
@@ -30,7 +30,7 @@ def main():
 
     print("Number of frames processed: ", len(fftprocess.buffered_process.process.process.data))
 
-    with open("validation/outputs/mfcc_mojo_results.csv", "w") as f:
+    with open("testing/mojo_results/mfcc_mojo_results.csv", "w") as f:
         f.write("windowsize," + String(fftsize) + "\n")
         f.write("hopsize," + String(hopsize) + "\n")
         f.write("num_coeffs," + String(num_coeffs) + "\n")

@@ -293,7 +293,7 @@ struct MelBands[num_bands: Int = 40, min_freq: Float64 = 20.0, max_freq: Float64
     var weights: List[List[Float64]]
     var bands: List[Float64]
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
 
         self.weights = List[List[Float64]](length=Self.num_bands,fill=List[Float64](length=(self.fft_size // 2) + 1, fill=0.0))

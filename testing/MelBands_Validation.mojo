@@ -8,7 +8,7 @@ struct MelBandsTestSuite(FFTProcessable):
     var melbands: MelBands[num_bands=nbands,min_freq=20.0,max_freq=20000.0,fft_size=fftsize]
     var data: List[List[Float64]]
 
-    fn __init__(out self, w: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, w: LegacyWorld):
         self.melbands = MelBands[num_bands=nbands,min_freq=20.0,max_freq=20000.0,fft_size=fftsize](w)
         self.data = List[List[Float64]]()
 
@@ -27,7 +27,7 @@ def main():
     
     print("Number of frames processed: ", len(fftprocess.buffered_process.process.process.data))
 
-    with open("validation/outputs/mel_bands_mojo.csv", "w") as f:
+    with open("testing/mojo_results/mel_bands_mojo.csv", "w") as f:
         for i,frame in enumerate(fftprocess.buffered_process.process.process.data):
             if i > 0:
                 f.write("\n")
