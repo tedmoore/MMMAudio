@@ -996,7 +996,7 @@ struct tf2[num_chans: Int = 1](Representable, Movable, Copyable):
         Returns:
             The next sample of the filtered output.
         """
-        return self.iir.next(input, coeffs[:3], coeffs[3:])
+        return self.iir.next(input, b0d, b1d, b2d, a1d, a2d)
 
 @doc_private
 @always_inline
@@ -1056,15 +1056,15 @@ struct BiquadModes:
     | lowshelf | 7     |
     | highshelf| 8     |
     """
-    alias lowpass: Int64 = 0
-    alias bandpass: Int64 = 1
-    alias highpass: Int64 = 2
-    alias notch: Int64 = 3
-    alias peak: Int64 = 4
-    alias allpass: Int64 = 5
-    alias bell: Int64 = 6
-    alias lowshelf: Int64 = 7
-    alias highshelf: Int64 = 8
+    comptime lowpass: Int64 = 0
+    comptime bandpass: Int64 = 1
+    comptime highpass: Int64 = 2
+    comptime notch: Int64 = 3
+    comptime peak: Int64 = 4
+    comptime allpass: Int64 = 5
+    comptime bell: Int64 = 6
+    comptime lowshelf: Int64 = 7
+    comptime highshelf: Int64 = 8
 
 struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
     """A Biquad filter struct.
@@ -1085,7 +1085,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
 
     var sample_rate: Float64
     
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         """Initialize the Biquad.
         
         Args:
@@ -1109,13 +1109,13 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
 
     @doc_private
     @always_inline
-    fn _compute_coefficients[filter_type: Int64](self, frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans], gain_db: SIMD[DType.float64, Self.num_chans]) -> (
+    fn _compute_coefficients[filter_type: Int64](self, frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans], gain_db: SIMD[DType.float64, Self.num_chans]) -> Tuple[
         SIMD[DType.float64, Self.num_chans], #b0
         SIMD[DType.float64, Self.num_chans], #b1
         SIMD[DType.float64, Self.num_chans], #b2
         SIMD[DType.float64, Self.num_chans], #a1
         SIMD[DType.float64, Self.num_chans]  #a2
-        ):
+        ]:
         """Compute filter coefficients based on type and parameters.
         
         Parameters:
@@ -1307,7 +1307,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
             q: The resonance of the filter.
 
         Returns:
-            The next sample of the filtered output
+            The next sample of the filtered output.
         """
         return self.next[BiquadModes.highpass](input, frequency, q)
 
