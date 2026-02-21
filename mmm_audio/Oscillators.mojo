@@ -199,7 +199,7 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](R
             freq: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](100.0), 
             phase_offset: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](0.0), 
             trig: Bool = False, 
-            osc_type: SIMD[DType.int64, self.num_chans] = SIMD[DType.int64, self.num_chans](OscType.sine)
+            osc_type: SIMD[DType.int, self.num_chans] = SIMD[DType.int, self.num_chans](OscType.sine)
         ) -> SIMD[DType.float64, self.num_chans]:
         """
         Generate the next oscillator sample on a single waveform type. All inputs are SIMD types except trig, which is a scalar. This means that an oscillator can have num_chans different instances, each with its own frequency, phase offset, and waveform type, but they will all share the same trigger signal.
@@ -289,7 +289,7 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](R
             freq: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](100.0), 
             phase_offset: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](0.0), 
             trig: Bool = False, 
-            osc_types: List[Int64] = [OscType.sine,OscType.triangle,OscType.saw,OscType.square], 
+            osc_types: List[Int] = [OscType.sine,OscType.triangle,OscType.saw,OscType.square], 
             osc_frac: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](0.0)
         ) -> SIMD[DType.float64, self.num_chans]:
         """Variable Wavetable Oscillator using built-in waveforms. Generates the next oscillator sample on a variable 
@@ -315,8 +315,8 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](R
 
         var scaled_osc_frac = Float64(max_osc_frac) * min(osc_frac, 1.0) #can't use a modulus here
 
-        var osc_type0: SIMD[DType.int64, self.num_chans] = SIMD[DType.int64, self.num_chans](scaled_osc_frac)
-        var osc_type1 = SIMD[DType.int64, self.num_chans](osc_type0 + 1)
+        var osc_type0: SIMD[DType.int, self.num_chans] = SIMD[DType.int, self.num_chans](scaled_osc_frac)
+        var osc_type1 = SIMD[DType.int, self.num_chans](osc_type0 + 1)
         osc_type0 = clip(osc_type0, 0,  max_osc_frac)
         osc_type1 = clip(osc_type1, 0, max_osc_frac)
         
@@ -375,8 +375,8 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](R
 
         var chan0_fl = Float64(max_osc_frac) * min(osc_frac, 1.0) #can't use a modulus here
 
-        var buf_chan0: SIMD[DType.int64, self.num_chans] = SIMD[DType.int64, self.num_chans](chan0_fl)
-        var buf_chan1 = SIMD[DType.int64, self.num_chans](buf_chan0 + 1)
+        var buf_chan0: SIMD[DType.int, self.num_chans] = SIMD[DType.int, self.num_chans](chan0_fl)
+        var buf_chan1 = SIMD[DType.int, self.num_chans](buf_chan0 + 1)
 
         scaled_osc_frac = chan0_fl - floor(chan0_fl)
 
@@ -471,7 +471,7 @@ struct SinOsc[num_chans: Int = 1, os_index: Int = 0] (Representable, Movable, Co
         return String("SinOsc")
 
     @always_inline
-    fn next(mut self: SinOsc, freq: SIMD[DType.float64, self.num_chans] = 100.0, phase_offset: SIMD[DType.float64, self.num_chans] = 0.0, trig: Bool = False, interp: Int64 = 0) -> SIMD[DType.float64, self.num_chans]:
+    fn next(mut self: SinOsc, freq: SIMD[DType.float64, self.num_chans] = 100.0, phase_offset: SIMD[DType.float64, self.num_chans] = 0.0, trig: Bool = False, interp: Int = 0) -> SIMD[DType.float64, self.num_chans]:
         return self.osc.next(freq, phase_offset, trig, 0)
 
 struct LFSaw[num_chans: Int = 1] (Representable, Movable, Copyable):

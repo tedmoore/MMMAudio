@@ -14,10 +14,10 @@ struct MMMWorld(Movable, Copyable):
     In pretty much all usage, don't edit this struct.
     """
     var sample_rate: Float64
-    var block_size: Int64
+    var block_size: Int
     var osc_buffers: OscBuffers
-    var num_in_chans: Int64
-    var num_out_chans: Int64
+    var num_in_chans: Int
+    var num_out_chans: Int
 
     var sound_in: List[Float64]
 
@@ -28,7 +28,7 @@ struct MMMWorld(Movable, Copyable):
     var mouse_x: Float64
     var mouse_y: Float64
 
-    var block_state: Int64
+    var block_state: Int
     var top_of_block: Bool
     
     # windows
@@ -39,12 +39,12 @@ struct MMMWorld(Movable, Copyable):
     var messengerManager: MessengerManager
 
     var last_print_time: Float64
-    var print_flag: Int64
-    var last_print_flag: Int64
+    var print_flag: Int
+    var last_print_flag: Int
 
     var print_counter: UInt16
 
-    fn __init__(out self, sample_rate: Float64 = 48000.0, block_size: Int64 = 64, num_in_chans: Int64 = 2, num_out_chans: Int64 = 2):
+    fn __init__(out self, sample_rate: Float64 = 48000.0, block_size: Int = 64, num_in_chans: Int = 2, num_out_chans: Int = 2):
         """Initializes the MMMWorld struct.
 
         Args:
@@ -89,7 +89,7 @@ struct MMMWorld(Movable, Copyable):
 
         print("MMMWorld initialized with sample rate:", self.sample_rate, "and block size:", self.block_size)
 
-    fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
+    fn set_channel_count(mut self, num_in_chans: Int, num_out_chans: Int):
         """Sets the number of input and output channels.
 
         Args:

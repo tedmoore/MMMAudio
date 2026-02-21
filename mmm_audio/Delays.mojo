@@ -13,7 +13,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
 
     var world: World
     var max_delay_time: Float64
-    var max_delay_samples: Int64
+    var max_delay_samples: Int
     var delay_line: Recorder[Self.num_chans]
     var two_sample_duration: Float64
     var sample_duration: Float64
@@ -28,7 +28,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
       """
         self.world = world
         self.max_delay_time = max_delay_time
-        self.max_delay_samples = Int64(max_delay_time * self.world[].sample_rate)
+        self.max_delay_samples = Int(max_delay_time * self.world[].sample_rate)
         var size_of_buffer = self.max_delay_samples
 
         @parameter
@@ -44,7 +44,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
         self.sample_duration = 1.0 / self.world[].sample_rate
         self.prev_f_idx = [Self.num_chans, 0.0]
 
-    fn __init__(out self, world: World, max_delay_samples: Int64 = 1024):
+    fn __init__(out self, world: World, max_delay_samples: Int = 1024):
       """Initialize the Delay line.
 
       Args:
@@ -147,7 +147,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
         self.delay_line.write_previous(input)
 
     @always_inline
-    fn next[N: Int](mut self, input: SIMD[DType.float64, self.num_chans], var delay_samps: MInt[N]) -> SIMD[DType.float64, self.num_chans]:
+    fn next[N: Int](mut self, input: SIMD[DType.float64, self.num_chans], delay_samps: MInt[N]) -> SIMD[DType.float64, self.num_chans]:
         """Process one sample through the delay line, first reading from the delay then writing into it. This version uses an integer lookup into the delay line and no interpolation.
 
         Args:

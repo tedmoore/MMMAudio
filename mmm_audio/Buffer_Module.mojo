@@ -37,7 +37,7 @@ struct SIMDBuffer[num_chans: Int = 2](Movable, Copyable):
         self.duration = self.num_frames_f64 / self.sample_rate
 
     @staticmethod
-    fn zeros(num_frames: Int64, sample_rate: Float64 = 48000.0) -> SIMDBuffer[Self.num_chans]:
+    fn zeros(num_frames: Int, sample_rate: Float64 = 48000.0) -> SIMDBuffer[Self.num_chans]:
         """Initialize a SIMDBuffer with zeros.
 
         Args:
@@ -50,7 +50,7 @@ struct SIMDBuffer[num_chans: Int = 2](Movable, Copyable):
         return SIMDBuffer(data, sample_rate)
 
     @staticmethod
-    fn load(filename: String, num_wavetables: Int64 = 1) -> SIMDBuffer[Self.num_chans]:
+    fn load(filename: String, num_wavetables: Int = 1) -> SIMDBuffer[Self.num_chans]:
         """
         Initialize a SIMDBuffer by loading data from a WAV file using SciPy and NumPy.
 
@@ -141,8 +141,8 @@ struct Buffer(Movable, Copyable):
     Audio data is stored in the `data` variable as a `List[List[Float64]]`, where each inner `List` represents a channel of audio samples.
     """
     var data: List[List[Float64]]
-    var num_chans: Int64 
-    var num_frames: Int64
+    var num_chans: Int 
+    var num_frames: Int
     var num_frames_f64: Float64
     var sample_rate: Float64
     var duration: Float64
@@ -169,7 +169,7 @@ struct Buffer(Movable, Copyable):
         self.duration = self.num_frames_f64 / self.sample_rate
 
     @staticmethod
-    fn zeros(num_frames: Int64, num_chans: Int64 = 1, sample_rate: Float64 = 48000.0) -> Buffer:
+    fn zeros(num_frames: Int, num_chans: Int = 1, sample_rate: Float64 = 48000.0) -> Buffer:
         """Initialize a Buffer with zeros.
 
         Args:
@@ -188,7 +188,7 @@ struct Buffer(Movable, Copyable):
         return Buffer(data, sample_rate)
 
     @staticmethod
-    fn load(filename: String, num_wavetables: Int64 = 1) -> Buffer:
+    fn load(filename: String, num_wavetables: Int = 1) -> Buffer:
         """
         Initialize a Buffer by loading data from a WAV file using SciPy and NumPy.
 
@@ -252,14 +252,14 @@ struct Buffer(Movable, Copyable):
                 if num_wavetables > 1:
                     for c in range(self_num_chans):
                         channel_data = List[Float64]()
-                        for f in range(Int64(self_num_frames)):
-                            channel_data.append(Float64(data_ptr[(c * Int64(self_num_frames)) + f]))
+                        for f in range(Int(self_num_frames)):
+                            channel_data.append(Float64(data_ptr[(c * Int(self_num_frames)) + f]))
                         self_data.append(channel_data^)
                 else:
                     # normal multi-channel interleaved data
                     for c in range(self_num_chans):
                         channel_data = List[Float64]()
-                        for f in range(Int64(self_num_frames)):
+                        for f in range(Int(self_num_frames)):
                             channel_data.append(Float64(data_ptr[(f * self_num_chans) + c]))
                         self_data.append(channel_data^)
 
@@ -292,7 +292,7 @@ struct SpanInterpolator(Movable, Copyable):
 
     @always_inline
     @staticmethod
-    fn idx_in_range[num_chans: Int = 1](data: Span[MFloat[num_chans]], idx: Int64) -> Bool:
+    fn idx_in_range[num_chans: Int = 1](data: Span[MFloat[num_chans]], idx: Int) -> Bool:
         return idx >= 0 and idx < len(data)
 
     # Once structs are allowed to have static variables, the since table will be stored in here so that 
@@ -347,12 +347,12 @@ struct SpanInterpolator(Movable, Copyable):
             f_idx: The floating-point index to read at.
         """
 
-        idx = Int64(f_idx)
+        idx = Int(f_idx)
         return SpanInterpolator.read_none[num_chans,bWrap,mask](data, idx)
     
     @always_inline
     @staticmethod
-    fn read_none[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans]], idx: Int64) -> MFloat[num_chans]:
+    fn read_none[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans]], idx: Int) -> MFloat[num_chans]:
         idx2 = idx
         @parameter
         if bWrap:
@@ -379,8 +379,8 @@ struct SpanInterpolator(Movable, Copyable):
             data: The `Span[MFloat[num_chans]]` to read from.
             f_idx: The floating-point index to read at.
         """
-        idx0: Int64 = Int64(f_idx)
-        idx1: Int64 = idx0 + 1
+        idx0: Int = Int(f_idx)
+        idx1: Int = idx0 + 1
         frac: Float64 = f_idx - Float64(idx0)
         @parameter
         if bWrap:
@@ -418,7 +418,7 @@ struct SpanInterpolator(Movable, Copyable):
             f_idx: The floating-point index to read at.
         """
 
-        idx0 = Int64(f_idx)
+        idx0 = Int(f_idx)
         idx1 = idx0 + 1
         idx2 = idx0 + 2
         frac: Float64 = f_idx - Float64(idx0)
@@ -461,7 +461,7 @@ struct SpanInterpolator(Movable, Copyable):
             data: The `Span[MFloat[num_chans]]` to read from.
             f_idx: The floating-point index to read at.
         """
-        idx1 = Int64(f_idx)
+        idx1 = Int(f_idx)
         idx0 = idx1 - 1
         idx2 = idx1 + 1
         idx3 = idx1 + 2
@@ -509,7 +509,7 @@ struct SpanInterpolator(Movable, Copyable):
             f_idx: The floating-point index to read at.
         """
        
-        idx0 = Int64(f_idx)
+        idx0 = Int(f_idx)
         idx1 = idx0 + 1
         idx2 = idx0 + 2
         idx3 = idx0 + 3

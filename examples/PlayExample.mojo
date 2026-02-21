@@ -5,7 +5,7 @@ comptime num_chans = 2
 struct BufSynth(Movable, Copyable):
     var world: World
     var buffer: SIMDBuffer[num_chans]
-    var num_chans: Int64
+    var num_chans: Int
 
     var play_buf: Play
     var play_rate: Float64

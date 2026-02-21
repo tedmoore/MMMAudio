@@ -13,7 +13,7 @@ struct Play(Representable, Movable, Copyable):
     var done: Bool
     var world: World
     var rising_bool_detector: RisingBoolDetector[1]
-    var start_frame: Int64 
+    var start_frame: Int 
     var reset_phase_point: Float64
     var phase_offset: Float64  # Offset for the phase calculation
 
@@ -36,7 +36,7 @@ struct Play(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Play")
 
-    fn next[num_chans: Int = 1, interp: Int = Interp.linear, bWrap: Bool = False](mut self, buf: SIMDBuffer[num_chans], rate: Float64 = 1, loop: Bool = True, trig: Bool = True, start_frame: Int64 = 0, var num_frames: Int64 = -1, start_chan: Int64 = 0) -> SIMD[DType.float64, num_chans]: 
+    fn next[num_chans: Int = 1, interp: Int = Interp.linear, bWrap: Bool = False](mut self, buf: SIMDBuffer[num_chans], rate: Float64 = 1, loop: Bool = True, trig: Bool = True, start_frame: Int = 0, var num_frames: Int = -1, start_chan: Int = 0) -> SIMD[DType.float64, num_chans]: 
         """Get the next sample from a SIMD audio buf (SIMDBuffer). The internal phasor is advanced according to the specified rate. If a trigger is received, playback starts at the specified start_frame. If looping is enabled, playback will loop back to the start when reaching the end of the specified num_frames.
 
         Parameters:
@@ -105,7 +105,7 @@ struct Play(Representable, Movable, Copyable):
 
     @doc_private
     @always_inline
-    fn get_sample[num_chans: Int, interp: Int, bWrap: Bool = False](self, buf: SIMDBuffer[num_chans], prev_phase: Float64, start_chan: Int64) -> SIMD[DType.float64, num_chans]:
+    fn get_sample[num_chans: Int, interp: Int, bWrap: Bool = False](self, buf: SIMDBuffer[num_chans], prev_phase: Float64, start_chan: Int) -> SIMD[DType.float64, num_chans]:
         f_idx = ((self.impulse.phase + self.phase_offset)) * buf.num_frames_f64
         out = SpanInterpolator.read[num_chans, interp=interp,bWrap=bWrap](
                 world=self.world,
@@ -116,7 +116,7 @@ struct Play(Representable, Movable, Copyable):
         return out
 
     @always_inline
-    fn next[num_chans: Int = 1, interp: Int = Interp.linear, bWrap: Bool = False](mut self, buf: Buffer, rate: Float64 = 1, loop: Bool = True, trig: Bool = True, start_frame: Int64 = 0, var num_frames: Int64 = -1, start_chan: Int64 = 0) -> SIMD[DType.float64, num_chans]: 
+    fn next[num_chans: Int = 1, interp: Int = Interp.linear, bWrap: Bool = False](mut self, buf: Buffer, rate: Float64 = 1, loop: Bool = True, trig: Bool = True, start_frame: Int = 0, var num_frames: Int = -1, start_chan: Int = 0) -> SIMD[DType.float64, num_chans]: 
         """Get the next sample from an audio buf (Buffer). The internal phasor is advanced according to the specified rate. If a trigger is received, playback starts at the specified start_frame. If looping is enabled, playback will loop back to the start when reaching the end of the specified num_frames.
 
         Parameters:
@@ -176,7 +176,7 @@ struct Play(Representable, Movable, Copyable):
 
     @doc_private
     @always_inline
-    fn get_sample[num_chans: Int, interp: Int, bWrap: Bool = False](self, buf: Buffer, prev_phase: Float64, start_chan: Int64) -> SIMD[DType.float64, num_chans]:
+    fn get_sample[num_chans: Int, interp: Int, bWrap: Bool = False](self, buf: Buffer, prev_phase: Float64, start_chan: Int) -> SIMD[DType.float64, num_chans]:
         
         out = SIMD[DType.float64, num_chans](0.0)
         @parameter
@@ -204,8 +204,8 @@ struct Grain(Representable, Movable, Copyable):
     """
     var world: World  # Pointer to the MMMWorld instance
 
-    var start_frame: Int64
-    var num_frames: Int64  
+    var start_frame: Int
+    var num_frames: Int  
     var rate: Float64  
     var pan: Float64  
     var gain: Float64 
@@ -239,7 +239,7 @@ struct Grain(Representable, Movable, Copyable):
     rate: Float64 = 1.0, 
     loop: Bool = False, 
     trig: Bool = False, 
-    start_frame: Int64 = 0.0, 
+    start_frame: Int = 0, 
     duration: Float64 = 0.0, 
     start_chan: Int = 0, 
     pan: Float64 = 0.0, 
@@ -279,7 +279,7 @@ struct Grain(Representable, Movable, Copyable):
     rate: Float64 = 1.0, 
     loop: Bool = False, 
     trig: Bool = False, 
-    start_frame: Int64 = 0.0, 
+    start_frame: Int = 0, 
     duration: Float64 = 0.0, 
     start_chan: Int = 0, 
     pan: Float64 = 0.0, 
@@ -316,7 +316,7 @@ struct Grain(Representable, Movable, Copyable):
     rate: Float64 = 1.0, 
     loop: Bool = False, 
     trig: Bool = False, 
-    start_frame: Int64 = 0.0, 
+    start_frame: Int = 0, 
     duration: Float64 = 0.0, 
     start_chan: Int = 0, 
     pan: Float64 = 0.0, 
@@ -342,7 +342,7 @@ struct Grain(Representable, Movable, Copyable):
         trig2 = False
         if self.rising_bool_detector.next(trig):
             self.start_frame = start_frame
-            self.num_frames =  Int64(duration * buffer.sample_rate*rate)  # Calculate end frame based on duration
+            self.num_frames =  Int(duration * buffer.sample_rate*rate)  # Calculate end frame based on duration
             self.rate = rate
             self.gain = gain
             self.pan = pan
@@ -397,7 +397,7 @@ struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
     mut buffer: SIMDBuffer, 
     rate: Float64 = 1.0, 
     trig: Bool = False, 
-    start_frame: Int64 = 0, 
+    start_frame: Int = 0, 
     duration: Float64 = 0.1, 
     buf_chan: Int = 0, 
     pan: Float64 = 0.0, 
@@ -441,7 +441,7 @@ struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
     mut buffer: SIMDBuffer, 
     rate: Float64 = 1.0, 
     trig: Bool = False, 
-    start_frame: Int64 = 0, 
+    start_frame: Int = 0, 
     duration: Float64 = 0.1, 
     buf_chan: Int = 0, 
     pan: Float64 = 0.0, 

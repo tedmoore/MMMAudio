@@ -30,7 +30,7 @@ struct OscVoice(Movable, Copyable):
 struct WavetableOsc(Movable, Copyable):
     var world: World  
     var osc_voices: List[OscVoice]
-    var wavetables_per_channel: Int64
+    var wavetables_per_channel: Int
     var buffer: Buffer
     var file_name: String
     var notes: List[List[Float64]]

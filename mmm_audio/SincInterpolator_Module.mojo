@@ -2,7 +2,7 @@ from mmm_audio import *
 from sys import simd_width_of
 from math import floor, log2, sin
 
-struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable):
+struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
     """Sinc Interpolation of `List[Float64]`s.
 
     Struct for high-quality audio resampling using sinc interpolation. This struct precomputes a sinc table and provides methods for performing sinc interpolation
@@ -15,13 +15,13 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
         power: Power of two determining the size of the sinc table (table_size = 2^power).
     """
     var table: List[Float64]  # Sinc table for interpolation
-    var table_size: Int64  # Size of the sinc table
-    var mask: Int64  # Mask for wrapping indices
-    var sinc_points: List[Int64]  # Points for sinc interpolation
-    var max_sinc_offset: Int64 
+    var table_size: Int  # Size of the sinc table
+    var mask: Int  # Mask for wrapping indices
+    var sinc_points: List[Int]  # Points for sinc interpolation
+    var max_sinc_offset: Int 
 
     var sinc_power_f64: Float64
-    var max_layer: Int64
+    var max_layer: Int
 
     fn __init__(out self):
         self.table_size = 1 << self.power  # Size of the sinc table, e.g., 16384 for power 14 (using bit shift instead of exponentiation)
@@ -29,9 +29,9 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
         self.table = SincInterpolator.build_sinc_table(self.table_size)
         self.max_sinc_offset = self.table_size // (self.ripples * 2)  # Calculate maximum sinc offset based on spacing
 
-        self.sinc_points = List[Int64]()
+        self.sinc_points = List[Int]()
         for i in range(self.table_size * 2):
-            self.sinc_points.append(Int64(i * self.table_size/(self.ripples * 2)))  # Initialize sinc points based on the sinc table size
+            self.sinc_points.append(Int(i * self.table_size/(self.ripples * 2)))  # Initialize sinc points based on the sinc table size
 
         self.sinc_power_f64 = Float64(self.power)  # Assuming sinc_power is 14
         self.max_layer = self.power - 3
@@ -41,7 +41,7 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
 
     @doc_private
     @always_inline
-    fn interp_points(self: SincInterpolator, sp: Int64, sinc_offset: Int64, sinc_mult: Int64, frac: Float64) -> Float64:
+    fn interp_points(self: SincInterpolator, sp: Int, sinc_offset: Int, sinc_mult: Int, frac: Float64) -> Float64:
         """Helper function to perform quadratic interpolation on sinc table points."""
         sinc_indexA = self.sinc_points[sp] - (sinc_offset * sinc_mult)
         
@@ -58,7 +58,7 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
 
     @doc_private
     @always_inline  
-    fn spaced_sinc[num_chans: Int = 1, bWrap: Bool = False, mask: Int = 0](self, data: Span[MFloat[num_chans]], index: Int64, frac: Float64, spacing: Int64) -> MFloat[num_chans]:
+    fn spaced_sinc[num_chans: Int = 1, bWrap: Bool = False, mask: Int = 0](self, data: Span[MFloat[num_chans]], index: Int, frac: Float64, spacing: Int) -> MFloat[num_chans]:
         """Read using spaced sinc interpolation. This is a helper function for read_sinc."""
         sinc_mult = self.max_sinc_offset / spacing
         loop_count = Self.ripples * 2
@@ -66,17 +66,17 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
         # Try to process in SIMD chunks if the loop is large enough
         comptime simd_width = simd_width_of[DType.float64]()
         var out: MFloat[num_chans] = 0.0
-        data_len: Int64 = len(data)
+        data_len: Int = len(data)
         
         # Process SIMD chunks
         for base_sp in range(0, loop_count, simd_width):
-            remaining: Int64 = min(Int64(simd_width), loop_count - base_sp)
+            remaining: Int = min(Int(simd_width), loop_count - base_sp)
             
             @parameter
             for i in range(simd_width):
-                if Int64(i) < remaining:
+                if Int(i) < remaining:
                     sp = base_sp + i
-                    offset: Int64 = Int64(sp - Self.ripples + 1)
+                    offset: Int = Int(sp - Self.ripples + 1)
                     
                     @parameter
                     if bWrap:
@@ -94,7 +94,7 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
                         spaced_point = (loc_point / spacing) * spacing
                         sinc_offset = loc_point - spaced_point
                         
-                        sinc_value = self.interp_points(sp, sinc_offset, sinc_mult, frac)
+                        sinc_value = self.interp_points(sp, Int(sinc_offset), Int(sinc_mult), frac)
                         out += sinc_value * data[spaced_point]
                     else:
                         loc_point = index + offset * spacing
@@ -104,7 +104,7 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
                             spaced_point = (loc_point / spacing) * spacing
                             sinc_offset = loc_point - spaced_point
                             
-                            sinc_value = self.interp_points(sp, sinc_offset, sinc_mult, frac)
+                            sinc_value = self.interp_points(sp, Int(sinc_offset), Int(sinc_mult), frac)
                             out += sinc_value * data[spaced_point]
                         # else: out of bounds, use 0.0 (zero padding) - no contribution to sum
     
@@ -115,6 +115,7 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
         """Perform sinc interpolation on the given data at the specified current index.
         
         Parameters:
+            num_chans: The number of channels in the audio data.
             bWrap: Whether to wrap around at the end of the buffer when an index exceeds the buffer length.
             mask: Mask for wrapping indices if bWrap is True.
         
@@ -138,7 +139,7 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
         octave = clip(log2(samples_per_frame), 0.0, self.sinc_power_f64 - 2.0)
         octave_floor = floor(octave)
         
-        var layer = Int64(octave_floor + 1.0)
+        var layer = Int(octave_floor + 1.0)
         var sinc_crossfade = octave - octave_floor
         
         var layer_clamped = min(layer, self.max_layer)
@@ -146,11 +147,11 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
         sinc_crossfade = selector.select(0.0, sinc_crossfade)
         layer = layer_clamped
         
-        spacing1: Int64 = Int64(1) << layer
-        spacing2: Int64 = spacing1 << 1
+        spacing1: Int = Int(1) << layer
+        spacing2: Int = spacing1 << 1
         
         f_index = current_index
-        index_floor = Int64(f_index)
+        index_floor = Int(f_index)
         frac = f_index - Float64(index_floor)
         
         sinc1 = self.spaced_sinc[num_chans, bWrap, mask](data, index_floor, frac, spacing1)
@@ -171,7 +172,7 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
 
     @doc_private
     @staticmethod
-    fn build_sinc_table(table_size: Int64) -> List[Float64]:
+    fn build_sinc_table(table_size: Int) -> List[Float64]:
         
         # Create evenly spaced points - the width is determined by ripples
         var width = Float64(Self.ripples)

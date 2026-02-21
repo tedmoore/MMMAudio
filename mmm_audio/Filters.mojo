@@ -99,15 +99,15 @@ struct SVFModes:
     | lowshelf | 7     |
     | highshelf| 8     |
     """
-    comptime lowpass: Int64 = 0
-    comptime bandpass: Int64 = 1
-    comptime highpass: Int64 = 2
-    comptime notch: Int64 = 3
-    comptime peak: Int64 = 4
-    comptime allpass: Int64 = 5
-    comptime bell: Int64 = 6
-    comptime lowshelf: Int64 = 7
-    comptime highshelf: Int64 = 8
+    comptime lowpass: Int = 0
+    comptime bandpass: Int = 1
+    comptime highpass: Int = 2
+    comptime notch: Int = 3
+    comptime peak: Int = 4
+    comptime allpass: Int = 5
+    comptime bell: Int = 6
+    comptime lowshelf: Int = 7
+    comptime highshelf: Int = 8
 
 struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
     """A State Variable Filter struct.
@@ -145,7 +145,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
 
     @doc_private
     @always_inline
-    fn _compute_coeficients[filter_type: Int64](self, frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans], gain_db: SIMD[DType.float64, Self.num_chans]) -> Tuple[SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans]]:
+    fn _compute_coeficients[filter_type: Int](self, frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans], gain_db: SIMD[DType.float64, Self.num_chans]) -> Tuple[SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans]]:
         """Compute filter coeficients based on type and parameters.
         
         Parameters:
@@ -189,7 +189,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
 
     @doc_private
     @always_inline
-    fn _get_mix_coeficients[filter_type: Int64](self, k: SIMD[DType.float64, Self.num_chans], A: SIMD[DType.float64, Self.num_chans]) -> Tuple[SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans]]:
+    fn _get_mix_coeficients[filter_type: Int](self, k: SIMD[DType.float64, Self.num_chans], A: SIMD[DType.float64, Self.num_chans]) -> Tuple[SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans]]:
         """Get mixing coeficients for different filter types"""
         
         mc0 = SIMD[DType.float64, Self.num_chans](1.0)
@@ -224,7 +224,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
 
     @doc_private
     @always_inline
-    fn next[filter_type: Int64](mut self, input: SIMD[DType.float64, Self.num_chans], frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans], gain_db: SIMD[DType.float64, Self.num_chans] = 0.0) -> SIMD[DType.float64, Self.num_chans]:
+    fn next[filter_type: Int](mut self, input: SIMD[DType.float64, Self.num_chans], frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans], gain_db: SIMD[DType.float64, Self.num_chans] = 0.0) -> SIMD[DType.float64, Self.num_chans]:
         """Process one sample through the SVF filter of the given type.
         
         Parameters:

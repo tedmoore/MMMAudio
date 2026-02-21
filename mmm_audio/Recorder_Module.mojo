@@ -12,7 +12,7 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
     var write_head: Int
     var buf: SIMDBuffer[Self.num_chans]
 
-    fn __init__(out self, world: World, num_frames: Int64, sample_rate: Float64):
+    fn __init__(out self, world: World, num_frames: Int, sample_rate: Float64):
         """
         Initialize the Recorder struct.
 

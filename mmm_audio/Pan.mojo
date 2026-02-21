@@ -113,7 +113,7 @@ fn splay[num_input_channels: Int](input: SIMD[DType.float64, num_input_channels]
     return out
 
 @always_inline
-fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: Int64, width: Float64 = 2.0, orientation: Float64 = 0.5) -> SIMD[DType.float64, simd_out_size]:
+fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: Int, width: Float64 = 2.0, orientation: Float64 = 0.5) -> SIMD[DType.float64, simd_out_size]:
     """
     Pan a mono sample to N speakers arranged in a circle around the listener using azimuth panning.
 
