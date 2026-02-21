@@ -197,76 +197,8 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
         # The beta parameter controls the trade-off between main lobe width and side lobe height
         beta = 5.0  # Typical values range from 5 to 8 for audio processing
 
-        window = SincInterpolator.build_kaiser_window(table_size, beta)
+        window = kaiser_window(table_size, beta)
         for i in range(len(table)):
             table[i] *= window[i]  # Apply the window to the sinc values
         
         return table.copy()
-
-    @doc_private
-    @staticmethod
-    fn build_kaiser_window(size: Int64, beta: Float64) -> List[Float64]:
-        """
-        Create a Kaiser window of length n with shape parameter beta.
-
-        - beta = 0: rectangular window.
-        - beta = 5: similar to Hamming window.
-        - beta = 6: similar to Hanning window.
-        - beta = 8.6: similar to Blackman window.
-        
-        Args:
-            size: Length of the window.
-            beta: Shape parameter that controls the trade-off between main lobe width and side lobe level. See description for details.
-        
-        Returns:
-            List[Float64] containing the Kaiser window coefficients.
-        """
-        var window = List[Float64]()
-
-        if size == 1:
-            window.append(1.0)
-            return window.copy()
-        
-        # Calculate the normalization factor
-        var i0_beta = SincInterpolator.build_bessel_i0(beta)
-        
-        # Generate window coefficients
-        for i in range(size):
-            # Calculate the argument for the Bessel function
-            var alpha = (Float64(size) - 1.0) / 2.0
-            var arg = beta * sqrt(1.0 - ((Float64(i) - alpha) / alpha) ** 2)
-
-            # Calculate Kaiser window coefficient
-            var coeff = SincInterpolator.build_bessel_i0(arg) / i0_beta
-            window.append(coeff)
-
-        return window.copy()
-
-    @doc_private
-    @staticmethod
-    fn build_bessel_i0(x: Float64) -> Float64:
-        """
-        Calculate the modified Bessel function of the first kind, order 0 (I₀). Uses polynomial approximation for accurate results.
-        
-        Args:
-            x: Input value.
-        
-        Returns:
-            I₀(x).
-        """
-        var abs_x = abs(x)
-        
-        if abs_x < 3.75:
-            # For |x| < 3.75, use polynomial approximation
-            var t = (x / 3.75) ** 2
-            return 1.0 + 3.5156229 * t + 3.0899424 * (t ** 2) + 1.2067492 * (t ** 3) + \
-                0.2659732 * (t ** 4) + 0.0360768 * (t ** 5) + 0.0045813 * (t ** 6)
-        else:
-            # For |x| >= 3.75, use asymptotic expansion
-            var t = 3.75 / abs_x
-            var result = (exp(abs_x) / (abs_x ** 0.5)) * \
-                        (0.39894228 + 0.01328592 * t + 0.00225319 * (t ** 2) - \
-                        0.00157565 * (t ** 3) + 0.00916281 * (t ** 4) - \
-                        0.02057706 * (t ** 5) + 0.02635537 * (t ** 6) - \
-                        0.01647633 * (t ** 7) + 0.00392377 * (t ** 8))
-            return result

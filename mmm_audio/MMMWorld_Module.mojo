@@ -4,7 +4,7 @@ from collections import Set
 from mmm_audio import *
 
 comptime MFloat[N: Int = 1] = SIMD[DType.float64, N]
-comptime MInt[N: Int = 1] = SIMD[DType.int64, N]
+comptime MInt[N: Int = 1] = SIMD[DType.int, N]
 comptime MBool[N: Int = 1] = SIMD[DType.bool, N]
 comptime World = UnsafePointer[mut=True, MMMWorld, MutExternalOrigin]
 
@@ -38,7 +38,6 @@ struct MMMWorld(Movable, Copyable):
 
     var messengerManager: MessengerManager
 
-    # var pointer_to_self: World
     var last_print_time: Float64
     var print_flag: Int64
     var last_print_flag: Int64
@@ -192,14 +191,10 @@ struct OscType:
     | OscType.triangle             | 1     |
     | OscType.saw                  | 2     |
     | OscType.square               | 3     |
-    | OscType.bandlimited_triangle | 4     |
-    | OscType.bandlimited_saw      | 5     |
-    | OscType.bandlimited_square.  | 6     |
+    | OscType.basic_waveforms      | 4     |
     """
     comptime sine: Int = 0
     comptime triangle: Int = 1
     comptime saw: Int = 2
     comptime square: Int = 3
-    comptime bandlimited_triangle: Int = 4
-    comptime bandlimited_saw: Int = 5
-    comptime bandlimited_square: Int = 6
+    comptime basic_waveforms: Int = 4

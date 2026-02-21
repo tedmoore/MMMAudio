@@ -66,7 +66,15 @@ fn splay[num_simd: Int](input: List[SIMD[DType.float64, num_simd]], world: World
             index0 = i // num_simd
             index1 = i % num_simd
             
-            ref pan_mul = global_constant[pan2_window]()[Int(pan * 255.0)]
+            pan_mul = SpanInterpolator.read[
+                        interp=Interp.none,
+                        bWrap=False,
+                        mask=255
+                    ](
+                        world = world,
+                        data=world[].windows.pan2,
+                        f_idx=pan * 255.0
+                    )
             out += input[index0][index1] * pan_mul
     return out
 
@@ -92,8 +100,15 @@ fn splay[num_input_channels: Int](input: SIMD[DType.float64, num_input_channels]
         else:
             pan = Float64(i) / Float64(num_input_channels - 1)
 
-            # should change this to use SpanInterpolator when available for SIMD types
-            ref pan_mul = global_constant[pan2_window]()[Int(pan * 255.0)]
+            pan_mul = SpanInterpolator.read[
+                        interp=Interp.none,
+                        bWrap=False,
+                        mask=255
+                    ](
+                        world = world,
+                        data=world[].windows.pan2,
+                        f_idx=pan * 255.0
+                    )
             out += input[i] * pan_mul
     return out
 

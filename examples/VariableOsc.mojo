@@ -44,6 +44,6 @@ struct VariableOsc(Representable, Movable, Copyable):
 
         # osc_frac = self.world[].mouse_x
         osc_frac = SIMD[DType.float64, 2](1-self.x, self.x)
-        sample = self.osc.next_vwt(freq, osc_frac = osc_frac)
+        sample = self.osc.next_basic_waveforms(freq, osc_frac = osc_frac)
 
         return sample * 0.1 * env

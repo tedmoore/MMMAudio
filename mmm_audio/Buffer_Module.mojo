@@ -4,6 +4,137 @@ from mmm_audio import *
 from math import sin, log2, ceil, floor
 from sys import simd_width_of
 
+
+struct SIMDBuffer[num_chans: Int = 2](Movable, Copyable):
+    """A multi-channel audio buffer for storing audio data.
+
+    Audio data is stored in the `data` variable as a `List[MFloat[Self.num_chans]]` where each `MFloat[Self.num_chans]` represents a single frame of audio data for all channels. For example, if `num_chans` is 2, each element of `data` would be an `MFloat[2]` where the first element is the sample value for the left channel and the second element is the sample value for the right channel.
+    """
+    var data: List[MFloat[Self.num_chans]]
+    var num_frames: Int
+    var num_frames_f64: Float64
+    var sample_rate: Float64
+    var duration: Float64
+
+    fn __init__(out self, data: List[MFloat[Self.num_chans]], sample_rate: Float64):
+        """Initialize a SIMDBuffer with the given audio data and sample rate.
+
+        Args:
+            data: A `List` of `List`s of `Float64` representing the audio data for each channel.
+            sample_rate: The sample rate of the audio data.
+        """
+
+        if len(data) > 1:
+            for chan in range(1,len(data)):
+                if len(data[chan]) != len(data[0]):
+                    print("SIMDBuffer::__init__ All channels must have the same number of frames")
+
+        self.data = data.copy()
+        self.sample_rate = sample_rate
+
+        self.num_frames = len(data) if self.num_chans > 0 else 0
+        self.num_frames_f64 = Float64(self.num_frames)
+        self.duration = self.num_frames_f64 / self.sample_rate
+
+    @staticmethod
+    fn zeros(num_frames: Int64, sample_rate: Float64 = 48000.0) -> SIMDBuffer[Self.num_chans]:
+        """Initialize a SIMDBuffer with zeros.
+
+        Args:
+            num_frames: Number of frames in the buffer.
+            sample_rate: Sample rate of the buffer.
+        """
+
+        var data = [MFloat[Self.num_chans](0.0) for _ in range(num_frames)]
+
+        return SIMDBuffer(data, sample_rate)
+
+    @staticmethod
+    fn load(filename: String, num_wavetables: Int64 = 1) -> SIMDBuffer[Self.num_chans]:
+        """
+        Initialize a SIMDBuffer by loading data from a WAV file using SciPy and NumPy.
+
+        Args:
+            filename: Path to the WAV file to load.
+            num_wavetables: Number of wavetables per channel. This is only used if the sound file being loaded contains multiple wavetables concatenated in a single channel.
+        """
+        # load the necessary Python modules
+        try:
+            scipy = Python.import_module("scipy")
+        except:
+            print("Warning: Failed to import SciPy module")
+            scipy = PythonObject(None)
+        try:
+            np = Python.import_module("numpy")
+        except:
+            print("Warning: Failed to import NumPy module")
+            np = PythonObject(None)
+
+        self_data = List[MFloat[Self.num_chans]]()
+
+        if filename != "":
+            # Load the file if a filename is provided
+            try:
+                py_data = scipy.io.wavfile.read(filename)  # Read the WAV file using SciPy
+
+                print(py_data)  # Print the loaded data for debugging
+
+                self_sample_rate = Float64(Int(py=py_data[0]))  # Sample rate is the first element of the tuple
+
+                if num_wavetables > 1:
+                    # If num_wavetables is specified, calculate num_chans accordingly
+                    total_samples = py_data[1].shape[0]
+                    self_num_chans = num_wavetables
+                    self_num_frames = Int(Float64(Int(py=total_samples)) / Float64(num_wavetables))
+                else:
+                    self_num_frames = Int(len(py_data[1]))  # num_frames is the length of the data array
+                    if len(py_data[1].shape) == 1:
+                        # Mono file
+                        self_num_chans = 1
+                    else:
+                        # Multi-channel file
+                        self_num_chans = Int(py=py_data[1].shape[1]) # Number of num_chans is the second dimension of the data array
+
+                self_num_frames_f64 = Float64(self_num_frames)
+
+                var data = py_data[1]  # Extract the actual sound data from the tuple
+                # Convert to float64 if it's not already
+                if data.dtype != np.float64:
+                    # If integer type, normalize to [-1.0, 1.0] range
+                    if np.issubdtype(data.dtype, np.integer):
+                        data = data.astype(np.float64) / np.iinfo(data.dtype).max
+                    else:
+                        data = data.astype(np.float64)
+                
+                # this returns a pointer to an interleaved array of floats
+                data_ptr = data.__array_interface__["data"][0].unsafe_get_as_pointer[DType.float64]()
+
+                # wavetables are stored in ordered channels, not interleaved
+                if num_wavetables > 1:
+                    for f in range(self_num_frames):
+                        channel_data = MFloat[Self.num_chans]()
+                        for c in range(self_num_chans):
+                            channel_data[Int(c)] = Float64(data_ptr[(c * self_num_chans) + f])
+                        self_data.append(channel_data)
+                else:
+                    for f in range(self_num_frames):
+                        channel_data = MFloat[Self.num_chans]()
+                        for c in range(self_num_chans):
+                            channel_data[Int(c)] = Float64(data_ptr[(f * self_num_chans) + c])
+                        self_data.append(channel_data)
+
+                
+
+                print("SIMDBuffer initialized with file:", filename)  # Print the filename for debugging
+                return SIMDBuffer(self_data, self_sample_rate)
+            except err:
+                print("SIMDBuffer::__init__ Error loading file: ", filename, " Error: ", err)
+                return SIMDBuffer[Self.num_chans].zeros(0,48000.0)
+        else:
+            print("SIMDBuffer::__init__ No filename provided")
+            return SIMDBuffer[Self.num_chans].zeros(0,48000.0)
+
+
 struct Buffer(Movable, Copyable):
     """A multi-channel audio buffer for storing audio data.
 
@@ -141,6 +272,8 @@ struct Buffer(Movable, Copyable):
             print("Buffer::__init__ No filename provided")
             return Buffer.zeros(0,0,48000.0)
 
+
+
 struct SpanInterpolator(Movable, Copyable):
     """
     A collection of static methods for interpolating values from a `List[Float64]` or `InlineArray[Float64]`.
@@ -205,6 +338,7 @@ struct SpanInterpolator(Movable, Copyable):
         """Read a value from a `Span[MFloat[num_chans]]` using provided index with no interpolation.
         
         Parameters:
+            num_chans: Number of channels in the data.
             bWrap: Whether to wrap indices that go out of bounds.
             mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).
 
@@ -237,6 +371,7 @@ struct SpanInterpolator(Movable, Copyable):
         """Read a value from a `Span[MFloat[num_chans]]` using provided index with linear interpolation.
         
         Parameters:
+            num_chans: Number of channels in the data.
             bWrap: Whether to wrap indices that go out of bounds.
             mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).
 
@@ -274,6 +409,7 @@ struct SpanInterpolator(Movable, Copyable):
         """Read a value from a `Span[MFloat[num_chans]]` using provided index with quadratic interpolation.
         
         Parameters:
+            num_chans: Number of channels in the data.
             bWrap: Whether to wrap indices that go out of bounds.
             mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).
 
@@ -317,6 +453,7 @@ struct SpanInterpolator(Movable, Copyable):
         """Read a value from a `Span[MFloat[num_chans]]` using provided index with cubic interpolation.
         
         Parameters:
+            num_chans: Number of channels in the data.
             bWrap: Whether to wrap indices that go out of bounds.
             mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used. (only valid for power-of-two lengths).
 
@@ -363,6 +500,7 @@ struct SpanInterpolator(Movable, Copyable):
         """Read a value from a `Span[MFloat[num_chans]]` using provided index with lagrange4 interpolation.
         
         Parameters:
+            num_chans: Number of channels in the data.
             bWrap: Whether to wrap indices that go out of bounds.
             mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).
 
@@ -416,6 +554,7 @@ struct SpanInterpolator(Movable, Copyable):
         """Read a value from a `Span[MFloat[num_chans]]` using provided index with [SincInterpolation](SincInterpolator.md).
         
         Parameters:
+            num_chans: Number of channels in the data.
             bWrap: Whether to wrap indices that go out of bounds.
             mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).
 
