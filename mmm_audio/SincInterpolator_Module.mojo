@@ -95,7 +95,7 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
                         sinc_offset = loc_point - spaced_point
                         
                         sinc_value = self.interp_points(sp, Int(sinc_offset), Int(sinc_mult), frac)
-                        out += sinc_value * data[spaced_point]
+                        out += sinc_value * data[Int(spaced_point)]
                     else:
                         loc_point = index + offset * spacing
                         

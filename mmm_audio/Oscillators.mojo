@@ -443,6 +443,82 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](R
                 self.last_phase = phase
             return self.oversampling.get_sample()
 
+    @always_inline
+    fn next_vwt[simd_chans: Int](
+            mut self: Osc, 
+            ref buffer: SIMDBuffer[simd_chans], 
+            freq: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](100.0), 
+            phase_offset: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](0.0), 
+            trig: Bool = False, 
+            osc_frac: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](0.0)
+        ) -> SIMD[DType.float64, self.num_chans]:
+        """Variable Wavetable Oscillator that interpolates over a loaded SIMDBuffer.
+        Generates the next oscillator sample on a variable waveform where the output is interpolated between 
+        different different channels of a provided Buffer. This should only be used with low channel counts (maybe up to 4 or 8 channels depending on the CPU).
+        
+        Args:
+            buffer: Reference to a Buffer containing the waveforms to interpolate between.
+            freq: Frequency of the oscillator in Hz.
+            phase_offset: Offsets the phase of the oscillator (default is 0.0).
+            trig: Trigger signal to reset the phase when switching from False to True (default is 0.0). All waveforms will reset together.
+            osc_frac: Fractional index for wavetable interpolation. Values are between 0.0 and 1.0. 0.0 corresponds to the first channel in the input buffer, 1.0 corresponds to the last channel in the input buffer, and values in between interpolate linearly between all channels in the buffer.
+        """
+        var trig_mask = SIMD[DType.bool, self.num_chans](fill=trig)
+
+        var max_osc_frac = buffer.num_chans - 1
+
+        var chan0_fl = Float64(max_osc_frac) * min(osc_frac, 1.0) #can't use a modulus here
+
+        var buf_chan0: SIMD[DType.int, self.num_chans] = SIMD[DType.int, self.num_chans](chan0_fl)
+        var buf_chan1 = SIMD[DType.int, self.num_chans](buf_chan0 + 1)
+
+        scaled_osc_frac = chan0_fl - floor(chan0_fl)
+
+        @parameter
+        if Self.os_index == 0:
+            # var last_phase = self.phasor.phase
+            var phase = self.phasor.next(freq, phase_offset, trig_mask)
+            out_sample = SIMD[DType.float64, self.num_chans](0.0)
+            @parameter
+            for out_chan in range(self.num_chans):
+                sample = SpanInterpolator.read[
+                        interp=self.interp,
+                        bWrap=True,
+                        mask=0
+                    ](
+                        world = self.world,
+                        data=buffer.data,
+                        f_idx=phase[out_chan] * buffer.num_frames_f64,
+                        prev_f_idx=self.last_phase[out_chan] * buffer.num_frames_f64
+                    )
+                out_sample[out_chan] = (MFloat[2](sample[Int(buf_chan0[out_chan])], sample[Int(buf_chan1[out_chan])]) * MFloat[2](1.0 - scaled_osc_frac[out_chan], scaled_osc_frac[out_chan])).reduce_add()
+                
+            self.last_phase = phase
+            return out_sample
+        else:
+            comptime times_os_int = 2**Self.os_index
+            @parameter
+            for i in range(times_os_int):
+                # var last_phase = self.phasor.phase
+                var phase = self.phasor.next(freq, phase_offset, trig_mask)
+                out_sample = SIMD[DType.float64, self.num_chans](0.0)
+                @parameter
+                for out_chan in range(self.num_chans):
+                    sample = SpanInterpolator.read[
+                            interp=self.interp,
+                            bWrap=True,
+                            mask=0
+                        ](
+                            world = self.world,
+                            data=buffer.data,
+                            f_idx=phase[out_chan] * buffer.num_frames_f64,
+                            prev_f_idx=self.last_phase[out_chan] * buffer.num_frames_f64
+                        )
+                    out_sample[out_chan] = (MFloat[2](sample[Int(buf_chan0[out_chan])], sample[Int(buf_chan1[out_chan])]) * MFloat[2](1.0 - scaled_osc_frac[out_chan], scaled_osc_frac[out_chan])).reduce_add()
+                self.oversampling.add_sample(out_sample)
+                self.last_phase = phase
+            return self.oversampling.get_sample()
+
 
 struct SinOsc[num_chans: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
     """A sine wave oscillator.
