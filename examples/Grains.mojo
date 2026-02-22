@@ -10,6 +10,7 @@ struct Grains(Movable, Copyable):
     var buffer: SIMDBuffer[2]
     
     var tgrains: TGrains[10] # set the number of simultaneous grains by setting the max_grains parameter here
+    var tgrains2: TGrains[10] 
     var impulse: Phasor[1]  
     var start_frame: Float64
      
@@ -20,6 +21,7 @@ struct Grains(Movable, Copyable):
         self.buffer = SIMDBuffer[2].load("resources/Shiverer.wav")
 
         self.tgrains = TGrains[10](self.world)  
+        self.tgrains2 = TGrains[10](self.world)
         self.impulse = Phasor[1](self.world)
 
 
@@ -43,7 +45,6 @@ struct Grains(Movable, Copyable):
         else:
             # pan each channel separately to num_output_chans speakers
             out0 = self.tgrains.next_pan_az[num_simd_chans=num_simd_chans](self.buffer, 1, impulse, start_frame, 0.4, 0, random_float64(-1.0, 1.0), 1.0, num_output_chans)
-
-            out1 = self.tgrains.next_pan_az[num_simd_chans=num_simd_chans](self.buffer, 1, impulse, start_frame, 0.4, 1, random_float64(-1.0, 1.0), 1.0, num_output_chans)
+            out1 = self.tgrains2.next_pan_az[num_simd_chans=num_simd_chans](self.buffer, 1, impulse, start_frame, 0.4, 1, random_float64(-1.0, 1.0), 1.0, num_output_chans)
 
             return out0 + out1
