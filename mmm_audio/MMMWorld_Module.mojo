@@ -30,6 +30,7 @@ struct MMMWorld(Movable, Copyable):
 
     var block_state: Int
     var top_of_block: Bool
+    var bottom_of_block: Bool
     
     # windows
     var windows: Windows

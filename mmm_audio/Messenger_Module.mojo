@@ -31,6 +31,18 @@ struct Messenger(Copyable, Movable):
         self.namespace = namespace
         self.key_dict = Dict[String, String]()
 
+    fn to_python(mut self, name: String, value: Float64):
+        """Send a Float64 value to Python under the specified name.
+
+        Args:
+            name: A `String` to identify the value in Python.
+            value: A `Float64` value to be sent to Python.
+        """
+        if self.world[].bottom_of_block:
+            try:
+                self.world[].messengerManager.to_python_float[self.get_name_with_namespace(name)[]] = value
+            except error:
+                print("Error occurred while sending float to python. Error: ", error)
 
     @doc_private
     fn get_name_with_namespace(mut self, name: String) raises -> LegacyUnsafePointer[mut=False,String]:
@@ -498,6 +510,8 @@ struct MessengerManager(Movable, Copyable):
 
     var trigs_msg_pool: Dict[String, List[Bool]]
     var trigs_msgs: Dict[String, TrigsMessage]
+
+    var to_python_float: Dict[String, Float64]
     
     fn __init__(out self):
 
@@ -530,6 +544,8 @@ struct MessengerManager(Movable, Copyable):
 
         self.trigs_msg_pool = Dict[String, List[Bool]]()
         self.trigs_msgs = Dict[String, TrigsMessage]()
+
+        self.to_python_float = Dict[String, Float64]()
 
     ##### Bool #####
     @always_inline

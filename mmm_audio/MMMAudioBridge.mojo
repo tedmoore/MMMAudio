@@ -160,6 +160,7 @@ struct MMMAudioBridge(Representable, Movable):
     fn get_audio_samples(mut self, loc_in_buffer: MutUnsafePointer[Float32], mut loc_out_buffer: MutUnsafePointer[Float64]) raises:
 
         self.world[].top_of_block = True
+        self.world[].bottom_of_block = False
         self.world[].messengerManager.transfer_msgs()
                 
         for i in range(self.world[].block_size):
@@ -168,6 +169,8 @@ struct MMMAudioBridge(Representable, Movable):
             if i == 1:
                 self.world[].top_of_block = False
                 self.world[].messengerManager.empty_msg_dicts()
+            elif i == self.world[].block_size - 1:
+                self.world[].bottom_of_block = True
 
             if self.world[].top_of_block:
                 self.world[].print_counter += 1
@@ -180,6 +183,7 @@ struct MMMAudioBridge(Representable, Movable):
             # Fill the wire buffer with the sample data
             for j in range(min(self.world[].num_out_chans, samples.__len__())):
                 loc_out_buffer[i * self.world[].num_out_chans + j] = samples[Int(j)]
+
     @staticmethod
     fn next(py_selfA: PythonObject, in_buffer: PythonObject, out_buffer: PythonObject) raises -> PythonObject:
 
@@ -194,7 +198,10 @@ struct MMMAudioBridge(Representable, Movable):
             for i in range(py_self[0].world[].block_size):
                 loc_out_buffer[i * py_self[0].world[].num_out_chans + j] = 0.0 
 
-        py_self[0].get_audio_samples(loc_in_buffer, loc_out_buffer)  
+        py_self[0].get_audio_samples(loc_in_buffer, loc_out_buffer)
+
+        for to_py_float in py_self[0].world[].messengerManager.to_python_float.take_items():
+            py_selfA.to_python(to_py_float.key, to_py_float.value)
 
         return PythonObject(None)  # Return a PythonObject wrapping the float value
 
