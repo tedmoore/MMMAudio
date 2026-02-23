@@ -9,7 +9,7 @@ if __name__ == "__main__":
     # instantiate and load the graph
     m = MMMAudio(128, graph_name="TestToPython", package_name="examples.tests")
 
-    m.register_callback("pitch", lambda v: print(f"pitch: {v}"))
+    # m.register_callback("pitch", lambda v: print(f"pitch: {v}"))
 
     # for i in range(200):
     #     m.register_callback("val_" + str(i), lambda v, i=i: print(f"val_{i}: {v}"))
