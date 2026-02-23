@@ -1000,28 +1000,7 @@ struct tf2[num_chans: Int = 1](Representable, Movable, Copyable):
 
 @doc_private
 @always_inline
-fn tf2s[num_chans: Int = 1](coeffs: List[SIMD[DType.float64, num_chans]], mut coeffs_out: List[SIMD[DType.float64, num_chans]], sample_rate: Float64):
-    """
-    A translation of Julius Smith's Faust implementation of digital filters.
-    Copyright (C) 2003-2019 by Julius O. Smith III.
-
-    Results are stored in coeffs_out.
-
-    Parameters:
-        num_chans: The number of SIMD channels to process.
-
-    Args:
-        coeffs: List containing analog coefficients [b2, b1, b0, a1, a0, w1] where b coefficients are numerator, a coefficients are denominator, and w1 is the angular frequency.
-        coeffs_out: Output list for digital coefficients [b0d, b1d, b2d, a1d, a2d].
-        sample_rate: The sample rate in Hz.
-    """
-    var b2 = coeffs[0]
-    var b1 = coeffs[1]
-    var b0 = coeffs[2]
-    var a1 = coeffs[3]
-    var a0 = coeffs[4]
-    var w1 = coeffs[5]
-
+fn tf2s[num_chans: Int = 1](b2: SIMD[DType.float64, num_chans], b1: SIMD[DType.float64, num_chans], b0: SIMD[DType.float64, num_chans], a1: SIMD[DType.float64, num_chans], a0: SIMD[DType.float64, num_chans], w1: SIMD[DType.float64, num_chans], sample_rate: Float64) -> Tuple[SIMD[DType.float64, num_chans], SIMD[DType.float64, num_chans], SIMD[DType.float64, num_chans], SIMD[DType.float64, num_chans], SIMD[DType.float64, num_chans]]:
     var c   = 1/tan(w1*0.5/sample_rate) # bilinear-transform scale-factor
     var csq = c*c
     var d   = a0 + a1 * c + csq
@@ -1031,11 +1010,7 @@ fn tf2s[num_chans: Int = 1](coeffs: List[SIMD[DType.float64, num_chans]], mut co
     var a1d = 2 * (a0 - csq)/d
     var a2d = (a0 - a1*c + csq)/d
 
-    coeffs_out[0] = b0d
-    coeffs_out[1] = b1d
-    coeffs_out[2] = b2d
-    coeffs_out[3] = a1d
-    coeffs_out[4] = a2d
+    return (b0d, b1d, b2d, a1d, a2d)
 
 @doc_private
 struct BiquadModes:
