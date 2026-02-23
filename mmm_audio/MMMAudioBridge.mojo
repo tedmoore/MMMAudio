@@ -200,10 +200,16 @@ struct MMMAudioBridge(Representable, Movable):
 
         py_self[0].get_audio_samples(loc_in_buffer, loc_out_buffer)
 
-        for to_py_float in py_self[0].world[].messengerManager.to_python_float.take_items():
-            py_selfA.to_python(to_py_float.key, to_py_float.value)
+        if len(py_self[0].world[].messengerManager.to_python_float) > 0:
+            d = Python.dict()
+            for to_py_float in py_self[0].world[].messengerManager.to_python_float.take_items():
+                print("to_py_float: ",to_py_float.key, " = ", to_py_float.value)
+                d[to_py_float.key] = to_py_float.value
 
-        return PythonObject(None)  # Return a PythonObject wrapping the float value
+            # return PythonObject(None)  # Return a PythonObject wrapping the float value
+            return d
+        else:
+            return PythonObject(None)  # Return a PythonObject wrapping None if there are no messages
 
 # this is needed to make the module importable in Python - so simple!
 @export

@@ -401,7 +401,10 @@ class MMMAudio:
                 )
                 # Process through Mojo bridge
                 with bridge_lock:
-                    mmm_audio_bridge.next(in_array, out_buffer)
+                    d = mmm_audio_bridge.next(in_array, out_buffer)
+                    if d:
+                        print(f"[PID {pid}] Received from Mojo: {d}")
+                        # sys.stdout.flush()
                 
                 out_buffer = np.clip(out_buffer, -1.0, 1.0)
                 output_bytes = out_buffer.astype(np.float32).tobytes()
