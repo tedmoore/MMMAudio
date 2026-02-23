@@ -50,10 +50,10 @@ struct Benjolin(Movable, Copyable):
         self.pulse2 = Osc[interp=2,os_index=1](self.world)
         self.delays = List[Delay[1,3]](capacity=8)
         self.latches = List[Latch[]](capacity=8)
-        self.filters = List[SVF[]](capacity=8)
-        self.filter_outputs = List[Float64](capacity=8)
+        self.filters = List[SVF[]](capacity=9)
+        self.filter_outputs = List[Float64](capacity=9)
         self.sample_dur = 1.0 / self.world[].sample_rate
-        self.sh = List[Float64](capacity=8)
+        self.sh = List[Float64](capacity=9)
         self.dctraps = List[DCTrap[]](capacity=2)
 
         self.freq1 = 40
@@ -128,8 +128,8 @@ struct Benjolin(Movable, Copyable):
         self.filter_outputs[1] = self.filters[1].hpf(pwm * self.gain,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q)
         self.filter_outputs[2] = self.filters[2].bpf(pwm * self.gain,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q)
         self.filter_outputs[3] = self.filters[3].lpf(pwm * self.gain,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q)
-        self.filter_outputs[4] = self.filters[4].bell(pwm * self.gain,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q)
-        self.filter_outputs[5] = self.filters[5].allpass(pwm * self.gain,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q)
+        self.filter_outputs[4] = self.filters[4].allpass(pwm * self.gain,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q)
+        self.filter_outputs[5] = self.filters[5].bell(pwm,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q,ampdb(self.gain))
         self.filter_outputs[6] = self.filters[6].highshelf(pwm,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q,ampdb(self.gain))
         self.filter_outputs[7] = self.filters[7].lowshelf(pwm,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q,ampdb(self.gain))
         
