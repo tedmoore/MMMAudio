@@ -1,6 +1,7 @@
 from mmm_audio import *
 from collections import Dict, Set
 from python import PythonObject
+from utils.variant import Variant
 
 struct Messenger(Copyable, Movable):
     """Communication between Python and Mojo.
@@ -54,9 +55,99 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].bottom_of_block:
             try:
-                self.world[].messengerManager.to_python(self.get_name_with_namespace(name)[],value)
+                self.world[].messengerManager.to_python_floats[self.get_name_with_namespace(name)[]] = value.copy()
             except error:
                 print("Error occurred while sending float list to python. Error: ", error)
+    
+    fn to_python(mut self, name: String, value: Int):
+        """Send an Int value to Python under the specified name.
+
+        Args:
+            name: A `String` to identify the value in Python.
+            value: An `Int` value to be sent to Python.
+        """
+        if self.world[].bottom_of_block:
+            try:
+                self.world[].messengerManager.to_python_int[self.get_name_with_namespace(name)[]] = value
+            except error:
+                print("Error occurred while sending int to python. Error: ", error)
+
+    fn to_python(mut self, name: String, value: List[Int]):
+        """Send a List[Int] value to Python under the specified name.
+
+        Args:
+            name: A `String` to identify the value in Python.
+            value: A `List[Int]` value to be sent to Python.
+        """
+        if self.world[].bottom_of_block:
+            try:
+                self.world[].messengerManager.to_python_ints[self.get_name_with_namespace(name)[]] = value.copy()
+            except error:
+                print("Error occurred while sending int list to python. Error: ", error)
+
+    fn to_python(mut self, name: String, value: Bool):
+        """Send a Bool value to Python under the specified name.
+
+        Args:
+            name: A `String` to identify the value in Python.
+            value: A `Bool` value to be sent to Python.
+        """
+        if self.world[].bottom_of_block:
+            try:
+                self.world[].messengerManager.to_python_bool[self.get_name_with_namespace(name)[]] = value
+            except error:
+                print("Error occurred while sending bool to python. Error: ", error)
+
+    fn to_python(mut self, name: String, value: List[Bool]):
+        """Send a List[Bool] value to Python under the specified name.
+
+        Args:
+            name: A `String` to identify the value in Python.
+            value: A `List[Bool]` value to be sent to Python.
+        """
+        if self.world[].bottom_of_block:
+            try:
+                self.world[].messengerManager.to_python_bools[self.get_name_with_namespace(name)[]] = value.copy()
+            except error:
+                print("Error occurred while sending bool list to python. Error: ", error)
+
+    fn to_python(mut self, name: String, value: String):
+        """Send a String value to Python under the specified name.
+
+        Args:
+            name: A `String` to identify the value in Python.
+            value: A `String` value to be sent to Python.
+        """
+        if self.world[].bottom_of_block:
+            try:
+                self.world[].messengerManager.to_python_string[self.get_name_with_namespace(name)[]] = value
+            except error:
+                print("Error occurred while sending string to python. Error: ", error)
+    
+    fn to_python(mut self, name: String, value: List[String]):
+        """Send a List[String] value to Python under the specified name.
+
+        Args:
+            name: A `String` to identify the value in Python.
+            value: A `List[String]` value to be sent to Python.
+        """
+        if self.world[].bottom_of_block:
+            try:
+                self.world[].messengerManager.to_python_strings[self.get_name_with_namespace(name)[]] = value.copy()
+            except error:
+                print("Error occurred while sending string list to python. Error: ", error)
+    
+    fn to_python(mut self, name: String):
+        """Send a trigger message to Python under the specified name.
+
+        Args:
+            name: A `String` to identify the trigger in Python.
+        """
+        if self.world[].bottom_of_block:
+            try:
+                self.world[].messengerManager.to_python_trig.add(self.get_name_with_namespace(name)[])
+            except error:
+                print("Error occurred while sending trig to python. Error: ", error)
 
     @doc_private
     fn get_name_with_namespace(mut self, name: String) raises -> LegacyUnsafePointer[mut=False,String]:
@@ -525,21 +616,17 @@ struct MessengerManager(Movable, Copyable):
     var trigs_msg_pool: Dict[String, List[Bool]]
     var trigs_msgs: Dict[String, TrigsMessage]
 
-    var to_python_float: Dict[String, Float64]  # Dict[String, Float64] of values to send to Python each block
-    var to_python_floats: Dict[String, List[Float64]]  # Dict[String, List[Float64]] of values to send to Python each block
+    # Sending data to Python
+    var to_python_float: Dict[String, Float64]
+    var to_python_floats: Dict[String, List[Float64]]
+    var to_python_int: Dict[String, Int]
+    var to_python_ints: Dict[String, List[Int]]
+    var to_python_bool: Dict[String, Bool]
+    var to_python_bools: Dict[String, List[Bool]]
+    var to_python_string: Dict[String, String]
+    var to_python_strings: Dict[String, List[String]]
+    var to_python_trig: Set[String]
 
-    fn to_python(mut self, name: String, value: List[Float64]):
-        """Send a List[Float64] value to Python under the specified name.
-
-        Args:
-            name: A `String` to identify the value in Python.
-            value: A `List[Float64]` value to be sent to Python.
-        """
-        try:
-            self.to_python_floats[name] = value.copy()
-        except error:
-            print("Error occurred while sending float list to python. Error: ", error)
-    
     fn __init__(out self):
 
         self.bool_msg_pool = Dict[String, Bool]()
@@ -574,6 +661,13 @@ struct MessengerManager(Movable, Copyable):
 
         self.to_python_float = Dict[String, Float64]()
         self.to_python_floats = Dict[String, List[Float64]]()
+        self.to_python_int = Dict[String, Int]()
+        self.to_python_ints = Dict[String, List[Int]]()
+        self.to_python_bool = Dict[String, Bool]()
+        self.to_python_bools = Dict[String, List[Bool]]()
+        self.to_python_string = Dict[String, String]()
+        self.to_python_strings = Dict[String, List[String]]()
+        self.to_python_trig = Set[String]()
         
     ##### Bool #####
     @always_inline

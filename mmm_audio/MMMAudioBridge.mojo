@@ -221,14 +221,59 @@ struct MMMAudioBridge(Representable, Movable):
         # it's better to keep the Python.dict() pretty localized because I think a lot of the
         # overhead comes from dealing with Python objects.
         if py_self[0].block_counter % 10 == 0: # Only send data to Python every 10 blocks to reduce overhead
+            
             pydict = Python.dict()
+            
+            # float
             for pf in py_self[0].world[].messengerManager.to_python_float.take_items():
                 pydict[pf.key] = pf.value
+
+            # floats
             for pfs in py_self[0].world[].messengerManager.to_python_floats.take_items():
                 arr = py_self[0].np.empty(len(pfs.value),dtype=py_self[0].np.float64)
                 for i in range(len(pfs.value)):
                     arr[i] = pfs.value[i]
                 pydict[pfs.key] = arr
+
+            # int
+            for pi in py_self[0].world[].messengerManager.to_python_int.take_items():
+                pydict[pi.key] = pi.value
+
+            # ints
+            for pis in py_self[0].world[].messengerManager.to_python_ints.take_items():
+                arr = py_self[0].np.empty(len(pis.value),dtype=py_self[0].np.int64)
+                for i in range(len(pis.value)):
+                    arr[i] = pis.value[i]
+                pydict[pis.key] = arr
+            
+            # bool
+            for pb in py_self[0].world[].messengerManager.to_python_bool.take_items():
+                pydict[pb.key] = pb.value
+            
+            # bools
+            for pbs in py_self[0].world[].messengerManager.to_python_bools.take_items():
+                arr = py_self[0].np.empty(len(pbs.value),dtype=py_self[0].np.bool_)
+                for i in range(len(pbs.value)):
+                    arr[i] = pbs.value[i]
+                pydict[pbs.key] = arr
+            
+            # string
+            for ps in py_self[0].world[].messengerManager.to_python_string.take_items():
+                pydict[ps.key] = ps.value
+            
+            # strings
+            for pss in py_self[0].world[].messengerManager.to_python_strings.take_items():
+                arr = py_self[0].np.empty(len(pss.value),dtype=py_self[0].np.object)
+                for i in range(len(pss.value)):
+                    arr[i] = pss.value[i]
+                pydict[pss.key] = arr
+            
+            # trigs
+            for key in py_self[0].world[].messengerManager.to_python_trig:
+                pydict[key] = None
+            
+            py_self[0].world[].messengerManager.to_python_trig.clear()  # Clear the to_python_trig set after sending trigs to Python
+
             return pydict
         else:
             return PythonObject(None)  # Return a PythonObject wrapping None if there are no messages
