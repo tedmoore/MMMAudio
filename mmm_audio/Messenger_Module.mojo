@@ -41,7 +41,7 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].bottom_of_block:
             try:
-                self.world[].messengerManager.to_python_float[self.get_name_with_namespace(name)[]] = value
+                self.world[].messengerManager.to_python_dict[self.get_name_with_namespace(name)[]] = value
             except error:
                 print("Error occurred while sending float to python. Error: ", error)
     
@@ -525,8 +525,8 @@ struct MessengerManager(Movable, Copyable):
     var trigs_msg_pool: Dict[String, List[Bool]]
     var trigs_msgs: Dict[String, TrigsMessage]
 
-    # var to_python_float: Dict[String, Float64]  # Dict[String, Float64] of values to send to Python each block
-    var to_python_float: PythonObject
+    # var to_python_dict: Dict[String, Float64]  # Dict[String, Float64] of values to send to Python each block
+    var to_python_dict: PythonObject
     var np: PythonObject
 
     fn to_python(mut self, name: String, value: List[Float64]):
@@ -540,7 +540,7 @@ struct MessengerManager(Movable, Copyable):
             arr = self.np.empty(len(value))
             for i in range(len(value)):
                 arr[i] = value[i]
-            self.to_python_float[name] = arr
+            self.to_python_dict[name] = arr
         except error:
             print("Error occurred while sending float list to python. Error: ", error)
     
@@ -576,13 +576,13 @@ struct MessengerManager(Movable, Copyable):
         self.trigs_msg_pool = Dict[String, List[Bool]]()
         self.trigs_msgs = Dict[String, TrigsMessage]()
 
-        self.to_python_float = PythonObject(None) 
+        self.to_python_dict = PythonObject(None) 
         self.np = PythonObject(None)
         try:
-            self.to_python_float = Python.dict()
+            self.to_python_dict = Python.dict()
             self.np = Python.import_module("numpy")
         except error:
-            print("Error occurred while initializing to_python_float. Error: ", error)
+            print("Error occurred while initializing to_python_dict. Error: ", error)
 
     ##### Bool #####
     @always_inline

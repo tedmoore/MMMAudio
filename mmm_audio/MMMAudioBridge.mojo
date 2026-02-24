@@ -201,14 +201,14 @@ struct MMMAudioBridge(Representable, Movable):
             for i in range(py_self[0].world[].block_size):
                 loc_out_buffer[i * py_self[0].world[].num_out_chans + j] = 0.0 
 
-        py_self[0].world[].messengerManager.to_python_float.clear()  # Clear the to_python_float dictionary at the start of each block
+        py_self[0].world[].messengerManager.to_python_dict.clear()  # Clear the to_python_dict dictionary at the start of each block
 
         py_self[0].get_audio_samples(loc_in_buffer, loc_out_buffer)
         
         py_self[0].block_counter += 1
 
-        if py_self[0].block_counter % 10 == 0 and len(py_self[0].world[].messengerManager.to_python_float) > 0:
-            return py_self[0].world[].messengerManager.to_python_float
+        if py_self[0].block_counter % 10 == 0 and len(py_self[0].world[].messengerManager.to_python_dict) > 0:
+            return py_self[0].world[].messengerManager.to_python_dict
         else:
             return PythonObject(None)  # Return a PythonObject wrapping None if there are no messages
 
