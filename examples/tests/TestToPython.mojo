@@ -24,9 +24,8 @@ struct TestToPython(Movable, Copyable):
 
         sig = self.play.next(self.buf)
         self.yin.next(sig)
-        self.m.to_python("pitch", self.yin.process.pitch)
-        self.m.to_python("vals", self.vals)
-        self.m.to_python("bool", random_float64() > 0.5)
-        self.m.to_python("trig")
+        self.m.reply_stream("pitch", self.yin.process.pitch)
+        self.m.reply_stream("vals", self.vals)
+        self.m.reply_stream("bool", random_float64() > 0.5)
 
         return SIMD[DType.float64, 2](sig, sig)

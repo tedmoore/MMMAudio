@@ -16,6 +16,7 @@ struct MMMAudioBridge(Representable, Movable):
     var graph: FeedbackDelays  # The audio graph instance
     var block_counter: Int
     var np: PythonObject # an instance of numpy for sending np arrays back to python
+    var pydict: PythonObject # a Python dictionary for sending messages back to python
 
     @staticmethod
     fn py_init(out self: MMMAudioBridge, args: PythonObject, kwargs: PythonObject) raises:
@@ -45,8 +46,11 @@ struct MMMAudioBridge(Representable, Movable):
 
         self.np = PythonObject(None)
 
+        self.pydict = PythonObject(None)
+
         try:
             self.np = Python.import_module("numpy")
+            self.pydict = Python.dict()
         except error:
             print("Error occurred while importing numpy. Error: ", error)
 
@@ -210,73 +214,99 @@ struct MMMAudioBridge(Representable, Movable):
             for i in range(py_self[0].world[].block_size):
                 loc_out_buffer[i * py_self[0].world[].num_out_chans + j] = 0.0 
 
-        py_self[0].world[].messengerManager.to_python_float.clear()  # Clear the to_python_float dictionary at the start of each block
-        py_self[0].world[].messengerManager.to_python_floats.clear()  # Clear the to_python_floats dictionary at the start of each block
+        py_self[0].world[].messengerManager.reply_stream_float.clear()  # Clear the reply_stream_float dictionary at the start of each block
+        py_self[0].world[].messengerManager.reply_stream_floats.clear()  # Clear the reply_stream_floats dictionary at the start of each block
 
         py_self[0].get_audio_samples(loc_in_buffer, loc_out_buffer)
+
+        py_self[0].pydict.clear()
+
+        for pf in py_self[0].world[].messengerManager.reply_once_float.take_items():
+            py_self[0].pydict[pf.key] = pf.value
         
+        for pfs in py_self[0].world[].messengerManager.reply_once_floats.take_items():
+            arr = py_self[0].np.empty(len(pfs.value),dtype=py_self[0].np.float64)
+            for i in range(len(pfs.value)):
+                arr[i] = pfs.value[i]
+            py_self[0].pydict[pfs.key] = arr
+        
+        for pi in py_self[0].world[].messengerManager.reply_once_int.take_items():
+            py_self[0].pydict[pi.key] = pi.value
+        
+        for pis in py_self[0].world[].messengerManager.reply_once_ints.take_items():
+            arr = py_self[0].np.empty(len(pis.value),dtype=py_self[0].np.int64)
+            for i in range(len(pis.value)):
+                arr[i] = pis.value[i]
+            py_self[0].pydict[pis.key] = arr
+        
+        for pb in py_self[0].world[].messengerManager.reply_once_bool.take_items():
+            py_self[0].pydict[pb.key] = pb.value
+        
+        for ps in py_self[0].world[].messengerManager.reply_once_string.take_items():
+            py_self[0].pydict[ps.key] = ps.value
+        
+        for pss in py_self[0].world[].messengerManager.reply_once_strings.take_items():
+            arr = Python.list()
+            for i in range(len(pss.value)):
+                arr.append(pss.value[i])
+            py_self[0].pydict[pss.key] = arr
+        
+        for pt in py_self[0].world[].messengerManager.reply_once_trig:
+            py_self[0].pydict[pt] = None  # Set the key to True to indicate the trig was received
+        
+        py_self[0].world[].messengerManager.reply_once_trig.clear()
+
         # even though this is a lot of code right here inside the next function, I think
         # it's better to keep the Python.dict() pretty localized because I think a lot of the
         # overhead comes from dealing with Python objects.
         if py_self[0].block_counter % 10 == 0: # Only send data to Python every 10 blocks to reduce overhead
-            
-            pydict = Python.dict()
-            
+                        
             # float
-            for pf in py_self[0].world[].messengerManager.to_python_float.take_items():
-                pydict[pf.key] = pf.value
+            for pf in py_self[0].world[].messengerManager.reply_stream_float.take_items():
+                py_self[0].pydict[pf.key] = pf.value
 
             # floats
-            for pfs in py_self[0].world[].messengerManager.to_python_floats.take_items():
+            for pfs in py_self[0].world[].messengerManager.reply_stream_floats.take_items():
                 arr = py_self[0].np.empty(len(pfs.value),dtype=py_self[0].np.float64)
                 for i in range(len(pfs.value)):
                     arr[i] = pfs.value[i]
-                pydict[pfs.key] = arr
+                py_self[0].pydict[pfs.key] = arr
 
             # int
-            for pi in py_self[0].world[].messengerManager.to_python_int.take_items():
-                pydict[pi.key] = pi.value
+            for pi in py_self[0].world[].messengerManager.reply_stream_int.take_items():
+                py_self[0].pydict[pi.key] = pi.value
 
             # ints
-            for pis in py_self[0].world[].messengerManager.to_python_ints.take_items():
+            for pis in py_self[0].world[].messengerManager.reply_stream_ints.take_items():
                 arr = py_self[0].np.empty(len(pis.value),dtype=py_self[0].np.int64)
                 for i in range(len(pis.value)):
                     arr[i] = pis.value[i]
-                pydict[pis.key] = arr
+                py_self[0].pydict[pis.key] = arr
             
             # bool
-            for pb in py_self[0].world[].messengerManager.to_python_bool.take_items():
-                pydict[pb.key] = pb.value
+            for pb in py_self[0].world[].messengerManager.reply_stream_bool.take_items():
+                py_self[0].pydict[pb.key] = pb.value
             
             # bools
-            # for pbs in py_self[0].world[].messengerManager.to_python_bools.take_items():
+            # for pbs in py_self[0].world[].messengerManager.reply_stream_bools.take_items():
             #     arr = py_self[0].np.empty(len(pbs.value),dtype=py_self[0].np.bool_)
             #     for i in range(len(pbs.value)):
             #         arr[i] = pbs.value[i]
-            #     pydict[pbs.key] = arr
+            #     py_self[0].pydict[pbs.key] = arr
             
             # string
-            for ps in py_self[0].world[].messengerManager.to_python_string.take_items():
-                pydict[ps.key] = ps.value
+            for ps in py_self[0].world[].messengerManager.reply_stream_string.take_items():
+                py_self[0].pydict[ps.key] = ps.value
             
             # strings
-            for pss in py_self[0].world[].messengerManager.to_python_strings.take_items():
-                arr = py_self[0].np.empty(len(pss.value),dtype=py_self[0].np.object)
+            for pss in py_self[0].world[].messengerManager.reply_stream_strings.take_items():
+                arr = Python.list()
                 for i in range(len(pss.value)):
-                    arr[i] = pss.value[i]
-                pydict[pss.key] = arr
-            
-            # trigs
-            for key in py_self[0].world[].messengerManager.to_python_trig:
-                pydict[key] = None
-            
-            py_self[0].world[].messengerManager.to_python_trig.clear()  # Clear the to_python_trig set after sending trigs to Python
-            
-            py_self[0].block_counter += 1
-            return pydict
-        else:
-            py_self[0].block_counter += 1
-            return PythonObject(None)  # Return a PythonObject wrapping None if there are no messages
+                    arr.append(pss.value[i])
+                py_self[0].pydict[pss.key] = arr
+                        
+        py_self[0].block_counter += 1
+        return py_self[0].pydict
 
 # this is needed to make the module importable in Python - so simple!
 @export

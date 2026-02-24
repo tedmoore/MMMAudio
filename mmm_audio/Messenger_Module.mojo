@@ -32,7 +32,7 @@ struct Messenger(Copyable, Movable):
         self.namespace = namespace
         self.key_dict = Dict[String, String]()
 
-    fn to_python(mut self, name: String, value: Float64):
+    fn reply_stream(mut self, name: String, value: Float64):
         """Send a Float64 value to Python under the specified name.
 
         Args:
@@ -41,11 +41,23 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].bottom_of_block:
             try:
-                self.world[].messengerManager.to_python_float[self.get_name_with_namespace(name)[]] = value
+                self.world[].messengerManager.reply_stream_float[self.get_name_with_namespace(name)[]] = value
             except error:
                 print("Error occurred while sending float to python. Error: ", error)
+        
+    fn reply_once(mut self, name: String, value: Float64):
+        """Send a Float64 value to Python under the specified name, but only for one block. After the block is finished, the value will be reset and won't be sent to Python again until `reply_once` is called again.
+
+        Args:
+            name: A `String` to identify the value in Python.
+            value: A `Float64` value to be sent to Python.
+        """
+        try:
+            self.world[].messengerManager.reply_once_float[self.get_name_with_namespace(name)[]] = value
+        except error:
+            print("Error occurred while sending float to python. Error: ", error)
     
-    fn to_python(mut self, name: String, value: List[Float64]):
+    fn reply_stream(mut self, name: String, value: List[Float64]):
         """Send a List[Float64] value to Python under the specified name.
 
         Args:
@@ -54,11 +66,23 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].bottom_of_block:
             try:
-                self.world[].messengerManager.to_python_floats[self.get_name_with_namespace(name)[]] = value.copy()
+                self.world[].messengerManager.reply_stream_floats[self.get_name_with_namespace(name)[]] = value.copy()
             except error:
                 print("Error occurred while sending float list to python. Error: ", error)
     
-    fn to_python(mut self, name: String, value: Int):
+    fn reply_once(mut self, name: String, value: List[Float64]):
+        """Send a List[Float64] value to Python under the specified name, but only for one block. After the block is finished, the value will be reset and won't be sent to Python again until `reply_once` is called again.
+
+        Args:
+            name: A `String` to identify the value in Python.
+            value: A `List[Float64]` value to be sent to Python.
+        """
+        try:
+            self.world[].messengerManager.reply_once_floats[self.get_name_with_namespace(name)[]] = value.copy()
+        except error:
+            print("Error occurred while sending float list to python. Error: ", error)
+
+    fn reply_stream(mut self, name: String, value: Int):
         """Send an Int value to Python under the specified name.
 
         Args:
@@ -67,11 +91,23 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].bottom_of_block:
             try:
-                self.world[].messengerManager.to_python_int[self.get_name_with_namespace(name)[]] = value
+                self.world[].messengerManager.reply_stream_int[self.get_name_with_namespace(name)[]] = value
             except error:
                 print("Error occurred while sending int to python. Error: ", error)
+    
+    fn reply_once(mut self, name: String, value: Int):
+        """Send an Int value to Python under the specified name, but only for one block. After the block is finished, the value will be reset and won't be sent to Python again until `reply_once` is called again.
 
-    fn to_python(mut self, name: String, value: List[Int]):
+        Args:
+            name: A `String` to identify the value in Python.
+            value: An `Int` value to be sent to Python.
+        """
+        try:
+            self.world[].messengerManager.reply_once_int[self.get_name_with_namespace(name)[]] = value
+        except error:
+            print("Error occurred while sending int to python. Error: ", error)
+
+    fn reply_stream(mut self, name: String, value: List[Int]):
         """Send a List[Int] value to Python under the specified name.
 
         Args:
@@ -80,11 +116,23 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].bottom_of_block:
             try:
-                self.world[].messengerManager.to_python_ints[self.get_name_with_namespace(name)[]] = value.copy()
+                self.world[].messengerManager.reply_stream_ints[self.get_name_with_namespace(name)[]] = value.copy()
             except error:
                 print("Error occurred while sending int list to python. Error: ", error)
 
-    fn to_python(mut self, name: String, value: Bool):
+    fn reply_once(mut self, name: String, value: List[Int]):
+        """Send a List[Int] value to Python under the specified name, but only for one block. After the block is finished, the value will be reset and won't be sent to Python again until `reply_once` is called again.
+
+        Args:
+            name: A `String` to identify the value in Python.
+            value: A `List[Int]` value to be sent to Python.
+        """
+        try:
+            self.world[].messengerManager.reply_once_ints[self.get_name_with_namespace(name)[]] = value.copy()
+        except error:
+            print("Error occurred while sending int list to python. Error: ", error)
+
+    fn reply_stream(mut self, name: String, value: Bool):
         """Send a Bool value to Python under the specified name.
 
         Args:
@@ -93,11 +141,23 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].bottom_of_block:
             try:
-                self.world[].messengerManager.to_python_bool[self.get_name_with_namespace(name)[]] = value
+                self.world[].messengerManager.reply_stream_bool[self.get_name_with_namespace(name)[]] = value
             except error:
                 print("Error occurred while sending bool to python. Error: ", error)
+    
+    fn reply_once(mut self, name: String, value: Bool):
+        """Send a Bool value to Python under the specified name, but only for one block. After the block is finished, the value will be reset and won't be sent to Python again until `reply_once` is called again.
 
-    # fn to_python(mut self, name: String, value: List[Bool]):
+        Args:
+            name: A `String` to identify the value in Python.
+            value: A `Bool` value to be sent to Python.
+        """
+        try:
+            self.world[].messengerManager.reply_once_bool[self.get_name_with_namespace(name)[]] = value
+        except error:
+            print("Error occurred while sending bool to python. Error: ", error)
+
+    # fn reply_stream(mut self, name: String, value: List[Bool]):
     #     """Send a List[Bool] value to Python under the specified name.
 
     #     Args:
@@ -106,11 +166,11 @@ struct Messenger(Copyable, Movable):
     #     """
     #     if self.world[].bottom_of_block:
     #         try:
-    #             self.world[].messengerManager.to_python_bools[self.get_name_with_namespace(name)[]] = value.copy()
+    #             self.world[].messengerManager.reply_stream_bools[self.get_name_with_namespace(name)[]] = value.copy()
     #         except error:
     #             print("Error occurred while sending bool list to python. Error: ", error)
 
-    fn to_python(mut self, name: String, value: String):
+    fn reply_stream(mut self, name: String, value: String):
         """Send a String value to Python under the specified name.
 
         Args:
@@ -119,11 +179,23 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].bottom_of_block:
             try:
-                self.world[].messengerManager.to_python_string[self.get_name_with_namespace(name)[]] = value
+                self.world[].messengerManager.reply_stream_string[self.get_name_with_namespace(name)[]] = value
             except error:
                 print("Error occurred while sending string to python. Error: ", error)
     
-    fn to_python(mut self, name: String, value: List[String]):
+    fn reply_once(mut self, name: String, value: String):
+        """Send a String value to Python under the specified name, but only for one block. After the block is finished, the value will be reset and won't be sent to Python again until `reply_once` is called again.
+
+        Args:
+            name: A `String` to identify the value in Python.
+            value: A `String` value to be sent to Python.
+        """
+        try:
+            self.world[].messengerManager.reply_once_string[self.get_name_with_namespace(name)[]] = value
+        except error:
+            print("Error occurred while sending string to python. Error: ", error)
+    
+    fn reply_stream(mut self, name: String, value: List[String]):
         """Send a List[String] value to Python under the specified name.
 
         Args:
@@ -132,21 +204,32 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].bottom_of_block:
             try:
-                self.world[].messengerManager.to_python_strings[self.get_name_with_namespace(name)[]] = value.copy()
+                self.world[].messengerManager.reply_stream_strings[self.get_name_with_namespace(name)[]] = value.copy()
             except error:
                 print("Error occurred while sending string list to python. Error: ", error)
     
-    fn to_python(mut self, name: String):
-        """Send a trigger message to Python under the specified name.
+    fn reply_once(mut self, name: String, value: List[String]):
+        """Send a List[String] value to Python under the specified name, but only for one block. After the block is finished, the value will be reset and won't be sent to Python again until `reply_once` is called again.
+
+        Args:
+            name: A `String` to identify the value in Python.
+            value: A `List[String]` value to be sent to Python.
+        """
+        try:
+            self.world[].messengerManager.reply_once_strings[self.get_name_with_namespace(name)[]] = value.copy()
+        except error:
+            print("Error occurred while sending string list to python. Error: ", error)
+    
+    fn reply_once(mut self, name: String):
+        """Send a trigger message to Python under the specified name, but only for one block. After the block is finished, the trigger will be reset and won't be sent to Python again until `reply_once` is called again.
 
         Args:
             name: A `String` to identify the trigger in Python.
         """
-        if self.world[].bottom_of_block:
-            try:
-                self.world[].messengerManager.to_python_trig.add(self.get_name_with_namespace(name)[])
-            except error:
-                print("Error occurred while sending trig to python. Error: ", error)
+        try:
+            self.world[].messengerManager.reply_once_trig.add(self.get_name_with_namespace(name)[])
+        except error:
+            print("Error occurred while sending trig to python. Error: ", error)
 
     @doc_private
     fn get_name_with_namespace(mut self, name: String) raises -> LegacyUnsafePointer[mut=False,String]:
@@ -616,15 +699,24 @@ struct MessengerManager(Movable, Copyable):
     var trigs_msgs: Dict[String, TrigsMessage]
 
     # Sending data to Python
-    var to_python_float: Dict[String, Float64]
-    var to_python_floats: Dict[String, List[Float64]]
-    var to_python_int: Dict[String, Int]
-    var to_python_ints: Dict[String, List[Int]]
-    var to_python_bool: Dict[String, Bool]
-    # var to_python_bools: Dict[String, List[Bool]]
-    var to_python_string: Dict[String, String]
-    var to_python_strings: Dict[String, List[String]]
-    var to_python_trig: Set[String]
+    var reply_stream_float: Dict[String, Float64]
+    var reply_stream_floats: Dict[String, List[Float64]]
+    var reply_stream_int: Dict[String, Int]
+    var reply_stream_ints: Dict[String, List[Int]]
+    var reply_stream_bool: Dict[String, Bool]
+    # var reply_stream_bools: Dict[String, List[Bool]]
+    var reply_stream_string: Dict[String, String]
+    var reply_stream_strings: Dict[String, List[String]]
+
+    var reply_once_float: Dict[String, Float64]
+    var reply_once_floats: Dict[String, List[Float64]]
+    var reply_once_int: Dict[String, Int]
+    var reply_once_ints: Dict[String, List[Int]]
+    var reply_once_bool: Dict[String, Bool]
+    # var reply_once_bools: Dict[String, List[Bool]]
+    var reply_once_string: Dict[String, String]
+    var reply_once_strings: Dict[String, List[String]]
+    var reply_once_trig: Set[String]
 
     fn __init__(out self):
 
@@ -658,15 +750,24 @@ struct MessengerManager(Movable, Copyable):
         self.trigs_msg_pool = Dict[String, List[Bool]]()
         self.trigs_msgs = Dict[String, TrigsMessage]()
 
-        self.to_python_float = Dict[String, Float64]()
-        self.to_python_floats = Dict[String, List[Float64]]()
-        self.to_python_int = Dict[String, Int]()
-        self.to_python_ints = Dict[String, List[Int]]()
-        self.to_python_bool = Dict[String, Bool]()
-        # self.to_python_bools = Dict[String, List[Bool]]()
-        self.to_python_string = Dict[String, String]()
-        self.to_python_strings = Dict[String, List[String]]()
-        self.to_python_trig = Set[String]()
+        self.reply_stream_float = Dict[String, Float64]()
+        self.reply_stream_floats = Dict[String, List[Float64]]()
+        self.reply_stream_int = Dict[String, Int]()
+        self.reply_stream_ints = Dict[String, List[Int]]()
+        self.reply_stream_bool = Dict[String, Bool]()
+        # self.reply_stream_bools = Dict[String, List[Bool]]()
+        self.reply_stream_string = Dict[String, String]()
+        self.reply_stream_strings = Dict[String, List[String]]()
+
+        self.reply_once_float = Dict[String, Float64]()
+        self.reply_once_floats = Dict[String, List[Float64]]()
+        self.reply_once_int = Dict[String, Int]()
+        self.reply_once_ints = Dict[String, List[Int]]()
+        self.reply_once_bool = Dict[String, Bool]()
+        # self.reply_once_bools = Dict[String, List[Bool]]()
+        self.reply_once_string = Dict[String, String]()
+        self.reply_once_strings = Dict[String, List[String]]()
+        self.reply_once_trig = Set[String]()
         
     ##### Bool #####
     @always_inline
