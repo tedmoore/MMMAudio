@@ -1,5 +1,6 @@
 from mmm_audio import *
 from collections import Dict, Set
+from python import PythonObject
 
 struct Messenger(Copyable, Movable):
     """Communication between Python and Mojo.
@@ -511,7 +512,8 @@ struct MessengerManager(Movable, Copyable):
     var trigs_msg_pool: Dict[String, List[Bool]]
     var trigs_msgs: Dict[String, TrigsMessage]
 
-    var to_python_float: Dict[String, Float64]
+    # var to_python_float: Dict[String, Float64]  # Dict[String, Float64] of values to send to Python each block
+    var to_python_float: PythonObject
     
     fn __init__(out self):
 
@@ -545,7 +547,11 @@ struct MessengerManager(Movable, Copyable):
         self.trigs_msg_pool = Dict[String, List[Bool]]()
         self.trigs_msgs = Dict[String, TrigsMessage]()
 
-        self.to_python_float = Dict[String, Float64]()
+        self.to_python_float = PythonObject(None) 
+        try:
+            self.to_python_float = Python.dict()
+        except error:
+            print("Error occurred while initializing to_python_float. Error: ", error)
 
     ##### Bool #####
     @always_inline

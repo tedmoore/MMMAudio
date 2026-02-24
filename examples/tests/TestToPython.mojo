@@ -20,6 +20,9 @@ struct TestToPython(Movable, Copyable):
 
         sig = self.play.next(self.buf)
         self.yin.next(sig)
+
+        # for i in range(200):
+        #     self.m.to_python("val_" + String(i), sig[0] * Float64(i))
         
         self.m.to_python("pitch", self.yin.process.pitch)
 

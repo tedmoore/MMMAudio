@@ -162,6 +162,7 @@ struct MMMAudioBridge(Representable, Movable):
         self.world[].top_of_block = True
         self.world[].bottom_of_block = False
         self.world[].messengerManager.transfer_msgs()
+        self.world[].messengerManager.to_python_float.clear()  # Clear the to_python_float dictionary at the start of each block
                 
         for i in range(self.world[].block_size):
             self.world[].block_state = i  # Update the block state
@@ -201,12 +202,7 @@ struct MMMAudioBridge(Representable, Movable):
         py_self[0].get_audio_samples(loc_in_buffer, loc_out_buffer)
 
         if len(py_self[0].world[].messengerManager.to_python_float) > 0:
-            d = Python.dict()
-            for to_py_float in py_self[0].world[].messengerManager.to_python_float.take_items():
-                d[to_py_float.key] = to_py_float.value
-
-            # return PythonObject(None)  # Return a PythonObject wrapping the float value
-            return d
+            return py_self[0].world[].messengerManager.to_python_float
         else:
             return PythonObject(None)  # Return a PythonObject wrapping None if there are no messages
 
