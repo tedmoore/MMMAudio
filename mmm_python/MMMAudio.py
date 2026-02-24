@@ -235,7 +235,6 @@ class MMMAudio:
                     command, data = self.callback_queue.get(timeout=0.1)
                     
                     if command == ResponseCommand.CALLBACKS:
-                        # data is the to_py_dict dictionary
                         for key, value in data.items():
                             if key in self.callbacks:
                                 try:
@@ -245,7 +244,6 @@ class MMMAudio:
                 except Empty:
                     pass  # No callbacks available
                 
-                # Small sleep to avoid busy-waiting
                 await asyncio.sleep(0.01)
                 
             except Exception as e:

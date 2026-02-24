@@ -15,7 +15,7 @@ struct MMMAudioBridge(Representable, Movable):
     var world: World
     var graph: FeedbackDelays  # The audio graph instance
     var block_counter: Int
-    var np: PythonObject
+    var np: PythonObject # an instance of numpy for sending np arrays back to python
 
     @staticmethod
     fn py_init(out self: MMMAudioBridge, args: PythonObject, kwargs: PythonObject) raises:
@@ -215,8 +215,6 @@ struct MMMAudioBridge(Representable, Movable):
 
         py_self[0].get_audio_samples(loc_in_buffer, loc_out_buffer)
         
-        py_self[0].block_counter += 1
-
         # even though this is a lot of code right here inside the next function, I think
         # it's better to keep the Python.dict() pretty localized because I think a lot of the
         # overhead comes from dealing with Python objects.
@@ -273,9 +271,11 @@ struct MMMAudioBridge(Representable, Movable):
                 pydict[key] = None
             
             py_self[0].world[].messengerManager.to_python_trig.clear()  # Clear the to_python_trig set after sending trigs to Python
-
+            
+            py_self[0].block_counter += 1
             return pydict
         else:
+            py_self[0].block_counter += 1
             return PythonObject(None)  # Return a PythonObject wrapping None if there are no messages
 
 # this is needed to make the module importable in Python - so simple!

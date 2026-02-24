@@ -1,7 +1,6 @@
 from mmm_audio import *
 from collections import Dict, Set
 from python import PythonObject
-from utils.variant import Variant
 
 struct Messenger(Copyable, Movable):
     """Communication between Python and Mojo.
