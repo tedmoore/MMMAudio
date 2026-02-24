@@ -222,7 +222,7 @@ struct MMMAudioBridge(Representable, Movable):
             for pf in py_self[0].world[].messengerManager.to_python_float.take_items():
                 pydict[pf.key] = pf.value
             for pfs in py_self[0].world[].messengerManager.to_python_floats.take_items():
-                arr = py_self[0].np.empty(len(pfs.value))
+                arr = py_self[0].np.empty(len(pfs.value),dtype=py_self[0].np.float64)
                 for i in range(len(pfs.value)):
                     arr[i] = pfs.value[i]
                 pydict[pfs.key] = arr
