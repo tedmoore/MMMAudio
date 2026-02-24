@@ -44,6 +44,19 @@ struct Messenger(Copyable, Movable):
                 self.world[].messengerManager.to_python_float[self.get_name_with_namespace(name)[]] = value
             except error:
                 print("Error occurred while sending float to python. Error: ", error)
+    
+    fn to_python(mut self, name: String, value: List[Float64]):
+        """Send a List[Float64] value to Python under the specified name.
+
+        Args:
+            name: A `String` to identify the value in Python.
+            value: A `List[Float64]` value to be sent to Python.
+        """
+        if self.world[].bottom_of_block:
+            try:
+                self.world[].messengerManager.to_python(self.get_name_with_namespace(name)[],value)
+            except error:
+                print("Error occurred while sending float list to python. Error: ", error)
 
     @doc_private
     fn get_name_with_namespace(mut self, name: String) raises -> LegacyUnsafePointer[mut=False,String]:
@@ -514,6 +527,22 @@ struct MessengerManager(Movable, Copyable):
 
     # var to_python_float: Dict[String, Float64]  # Dict[String, Float64] of values to send to Python each block
     var to_python_float: PythonObject
+    var np: PythonObject
+
+    fn to_python(mut self, name: String, value: List[Float64]):
+        """Send a List[Float64] value to Python under the specified name.
+
+        Args:
+            name: A `String` to identify the value in Python.
+            value: A `List[Float64]` value to be sent to Python.
+        """
+        try:
+            arr = self.np.empty(len(value))
+            for i in range(len(value)):
+                arr[i] = value[i]
+            self.to_python_float[name] = arr
+        except error:
+            print("Error occurred while sending float list to python. Error: ", error)
     
     fn __init__(out self):
 
@@ -548,8 +577,10 @@ struct MessengerManager(Movable, Copyable):
         self.trigs_msgs = Dict[String, TrigsMessage]()
 
         self.to_python_float = PythonObject(None) 
+        self.np = PythonObject(None)
         try:
             self.to_python_float = Python.dict()
+            self.np = Python.import_module("numpy")
         except error:
             print("Error occurred while initializing to_python_float. Error: ", error)
 
