@@ -211,22 +211,22 @@ struct MMMAudioBridge(Representable, Movable):
                 loc_out_buffer[i * py_self[0].world[].num_out_chans + j] = 0.0 
 
         py_self[0].world[].messengerManager.to_python_float.clear()  # Clear the to_python_float dictionary at the start of each block
+        py_self[0].world[].messengerManager.to_python_floats.clear()  # Clear the to_python_floats dictionary at the start of each block
 
         py_self[0].get_audio_samples(loc_in_buffer, loc_out_buffer)
         
         py_self[0].block_counter += 1
 
-        if py_self[0].block_counter % 10 == 0:
+        if py_self[0].block_counter % 10 == 0: # Only send data to Python every 10 blocks to reduce overhead
             pydict = Python.dict()
-            if len(py_self[0].world[].messengerManager.to_python_float) > 0:
-                for pf in py_self[0].world[].messengerManager.to_python_float.take_items():
-                    pydict[pf.key] = pf.value
-                for pfs in py_self[0].world[].messengerManager.to_python_floats.take_items():
-                    arr = py_self[0].np.empty(len(pfs.value))
-                    for i in range(len(pfs.value)):
-                        arr[i] = pfs.value[i]
-                    pydict[pfs.key] = arr
-                return pydict
+            for pf in py_self[0].world[].messengerManager.to_python_float.take_items():
+                pydict[pf.key] = pf.value
+            for pfs in py_self[0].world[].messengerManager.to_python_floats.take_items():
+                arr = py_self[0].np.empty(len(pfs.value))
+                for i in range(len(pfs.value)):
+                    arr[i] = pfs.value[i]
+                pydict[pfs.key] = arr
+            return pydict
         else:
             return PythonObject(None)  # Return a PythonObject wrapping None if there are no messages
 

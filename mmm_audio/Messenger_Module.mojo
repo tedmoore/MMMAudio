@@ -572,14 +572,9 @@ struct MessengerManager(Movable, Copyable):
         self.trigs_msg_pool = Dict[String, List[Bool]]()
         self.trigs_msgs = Dict[String, TrigsMessage]()
 
-        self.to_python_float = PythonObject(None) 
-        self.np = PythonObject(None)
-        try:
-            self.to_python_float = Python.dict()
-            self.np = Python.import_module("numpy")
-        except error:
-            print("Error occurred while initializing to_python_float. Error: ", error)
-
+        self.to_python_float = Dict[String, Float64]()
+        self.to_python_floats = Dict[String, List[Float64]]()
+        
     ##### Bool #####
     @always_inline
     fn update_bool_msg(mut self, key: String, value: Bool):
