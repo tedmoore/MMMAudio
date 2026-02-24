@@ -58,7 +58,7 @@ struct MMMWorld(Movable, Copyable):
         self.sample_rate = sample_rate
         self.block_size = block_size
         self.top_of_block = False
-        self.bottom_of_block = False
+        self.bottom_of_block = False # indicate if the currently retrieving sample is the last of the audio block
         self.num_in_chans = num_in_chans
         self.num_out_chans = num_out_chans
         self.sound_in = List[Float64]()

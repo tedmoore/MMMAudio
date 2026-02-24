@@ -9,6 +9,12 @@ struct Messenger(Copyable, Movable):
     any parameters registered with it accordingly. Each data type has its own `update` function and `notify_update` which will return a Bool indicating whether the parameter was updated.
 
     For example usage, see the MessengerExample.mojo file in the [Examples](../examples/index.md) folder.
+
+    Similarly, each data type has its own `reply_stream` and `reply_once` functions to send values back to Python. `reply_stream` is for continuously changing values that you want to "stream" back to Python. Every 10 audio blocks, the most recent value is sent (whatever the value was on the last sample of that audio block). 
+    
+    `reply_once` is for sending values just once (or infrequently). At the end of the current audio block this value will be sent to Python. `reply_once` is best used inside an `if` statement in Mojo so the sending only happens in certain circumstances.
+    
+    See the Python class `MMMAudio`'s `register_callback` for information on how to receive the values.
     """
 
     var namespace: Optional[String]
@@ -23,6 +29,8 @@ struct Messenger(Copyable, Movable):
         For example, if a Float64 updates with the name 'freq' and this Messenger has the
         namespace 'synth1', then to update the freq value from Python, the user must send 'synth1.freq'.
 
+        Similarly, if a value is being sent from Mojo to Python and a namespace is supplied, the value will be sent under the name 'namespace.value_name'. For example, if a Float64 value is being sent with the name 'spec_cent' and the namespace is 'sound1', then in Python this value will be received under the name 'sound1.spec_cent'.
+
         Args:
             world: An `World` to the world to check for new messages.
             namespace: A `String` (or by defaut `None`) to declare as the 'namespace' for this Messenger. If a 'namespace' is provided, any messages sent from Python need to be prepended with this name. For example, if a Float64 updates with the name 'freq' and this Messenger has the namespace 'synth1', then to update the freq value from Python, the user must send 'synth1.freq'.
@@ -33,7 +41,7 @@ struct Messenger(Copyable, Movable):
         self.key_dict = Dict[String, String]()
 
     fn reply_stream(mut self, name: String, value: Float64):
-        """Send a Float64 value to Python under the specified name.
+        """Stream a Float64 value to Python under the specified name.
 
         Args:
             name: A `String` to identify the value in Python.
@@ -46,7 +54,7 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while sending float to python. Error: ", error)
         
     fn reply_once(mut self, name: String, value: Float64):
-        """Send a Float64 value to Python under the specified name, but only for one block. After the block is finished, the value will be reset and won't be sent to Python again until `reply_once` is called again.
+        """Send a Float64 value to Python under the specified name.
 
         Args:
             name: A `String` to identify the value in Python.
@@ -58,7 +66,9 @@ struct Messenger(Copyable, Movable):
             print("Error occurred while sending float to python. Error: ", error)
     
     fn reply_stream(mut self, name: String, value: List[Float64]):
-        """Send a List[Float64] value to Python under the specified name.
+        """Stream a List[Float64] value to Python under the specified name.
+
+        It will be received in Python as a 1D numpy array.
 
         Args:
             name: A `String` to identify the value in Python.
@@ -71,7 +81,9 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while sending float list to python. Error: ", error)
     
     fn reply_once(mut self, name: String, value: List[Float64]):
-        """Send a List[Float64] value to Python under the specified name, but only for one block. After the block is finished, the value will be reset and won't be sent to Python again until `reply_once` is called again.
+        """Send a List[Float64] value to Python under the specified name.
+
+        It will be received in Python as a 1D numpy array.
 
         Args:
             name: A `String` to identify the value in Python.
@@ -83,7 +95,7 @@ struct Messenger(Copyable, Movable):
             print("Error occurred while sending float list to python. Error: ", error)
 
     fn reply_stream(mut self, name: String, value: Int):
-        """Send an Int value to Python under the specified name.
+        """Stream an Int value to Python under the specified name.
 
         Args:
             name: A `String` to identify the value in Python.
@@ -96,7 +108,7 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while sending int to python. Error: ", error)
     
     fn reply_once(mut self, name: String, value: Int):
-        """Send an Int value to Python under the specified name, but only for one block. After the block is finished, the value will be reset and won't be sent to Python again until `reply_once` is called again.
+        """Send an Int value to Python under the specified name.
 
         Args:
             name: A `String` to identify the value in Python.
@@ -108,7 +120,9 @@ struct Messenger(Copyable, Movable):
             print("Error occurred while sending int to python. Error: ", error)
 
     fn reply_stream(mut self, name: String, value: List[Int]):
-        """Send a List[Int] value to Python under the specified name.
+        """Stream a List[Int] value to Python under the specified name.
+
+        It will be received in Python as a 1D numpy array.
 
         Args:
             name: A `String` to identify the value in Python.
@@ -121,7 +135,9 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while sending int list to python. Error: ", error)
 
     fn reply_once(mut self, name: String, value: List[Int]):
-        """Send a List[Int] value to Python under the specified name, but only for one block. After the block is finished, the value will be reset and won't be sent to Python again until `reply_once` is called again.
+        """Send a List[Int] value to Python under the specified name.
+
+        It will be received in Python as a 1D numpy array.
 
         Args:
             name: A `String` to identify the value in Python.
@@ -133,7 +149,7 @@ struct Messenger(Copyable, Movable):
             print("Error occurred while sending int list to python. Error: ", error)
 
     fn reply_stream(mut self, name: String, value: Bool):
-        """Send a Bool value to Python under the specified name.
+        """Stream a Bool value to Python under the specified name.
 
         Args:
             name: A `String` to identify the value in Python.
@@ -146,7 +162,7 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while sending bool to python. Error: ", error)
     
     fn reply_once(mut self, name: String, value: Bool):
-        """Send a Bool value to Python under the specified name, but only for one block. After the block is finished, the value will be reset and won't be sent to Python again until `reply_once` is called again.
+        """Send a Bool value to Python under the specified name.
 
         Args:
             name: A `String` to identify the value in Python.
@@ -158,7 +174,7 @@ struct Messenger(Copyable, Movable):
             print("Error occurred while sending bool to python. Error: ", error)
 
     # fn reply_stream(mut self, name: String, value: List[Bool]):
-    #     """Send a List[Bool] value to Python under the specified name.
+    #     """Stream a List[Bool] value to Python under the specified name.
 
     #     Args:
     #         name: A `String` to identify the value in Python.
@@ -171,7 +187,7 @@ struct Messenger(Copyable, Movable):
     #             print("Error occurred while sending bool list to python. Error: ", error)
 
     fn reply_stream(mut self, name: String, value: String):
-        """Send a String value to Python under the specified name.
+        """Stream a String to Python under the specified name.
 
         Args:
             name: A `String` to identify the value in Python.
@@ -184,7 +200,7 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while sending string to python. Error: ", error)
     
     fn reply_once(mut self, name: String, value: String):
-        """Send a String value to Python under the specified name, but only for one block. After the block is finished, the value will be reset and won't be sent to Python again until `reply_once` is called again.
+        """Send a String value to Python under the specified name.
 
         Args:
             name: A `String` to identify the value in Python.
@@ -196,7 +212,7 @@ struct Messenger(Copyable, Movable):
             print("Error occurred while sending string to python. Error: ", error)
     
     fn reply_stream(mut self, name: String, value: List[String]):
-        """Send a List[String] value to Python under the specified name.
+        """Stream a List[String] value to Python under the specified name.
 
         Args:
             name: A `String` to identify the value in Python.
@@ -209,7 +225,7 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while sending string list to python. Error: ", error)
     
     fn reply_once(mut self, name: String, value: List[String]):
-        """Send a List[String] value to Python under the specified name, but only for one block. After the block is finished, the value will be reset and won't be sent to Python again until `reply_once` is called again.
+        """Send a List[String] value to Python under the specified name.
 
         Args:
             name: A `String` to identify the value in Python.
@@ -221,7 +237,7 @@ struct Messenger(Copyable, Movable):
             print("Error occurred while sending string list to python. Error: ", error)
     
     fn reply_once(mut self, name: String):
-        """Send a trigger message to Python under the specified name, but only for one block. After the block is finished, the trigger will be reset and won't be sent to Python again until `reply_once` is called again.
+        """Send a trigger message to Python under the specified name.
 
         Args:
             name: A `String` to identify the trigger in Python.
@@ -665,6 +681,7 @@ struct TrigsMessage(Movable, Copyable):
 @doc_private
 struct MessengerManager(Movable, Copyable):
 
+    # Data Structure for Receiving Data from Python
     var bool_msg_pool: Dict[String, Bool]
     var bool_msgs: Dict[String, BoolMessage]
 
@@ -698,7 +715,7 @@ struct MessengerManager(Movable, Copyable):
     var trigs_msg_pool: Dict[String, List[Bool]]
     var trigs_msgs: Dict[String, TrigsMessage]
 
-    # Sending data to Python
+    # Data Structures for Sending Data to Python
     var reply_stream_float: Dict[String, Float64]
     var reply_stream_floats: Dict[String, List[Float64]]
     var reply_stream_int: Dict[String, Int]

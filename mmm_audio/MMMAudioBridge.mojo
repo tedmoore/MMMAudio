@@ -14,7 +14,7 @@ from examples.FeedbackDelays import FeedbackDelays
 struct MMMAudioBridge(Representable, Movable):
     var world: World
     var graph: FeedbackDelays  # The audio graph instance
-    var block_counter: Int
+    var block_counter: Int # count how many blocks this audio thread has been alive
     var np: PythonObject # an instance of numpy for sending np arrays back to python
     var pydict: PythonObject # a Python dictionary for sending messages back to python
 
@@ -219,8 +219,16 @@ struct MMMAudioBridge(Representable, Movable):
 
         py_self[0].get_audio_samples(loc_in_buffer, loc_out_buffer)
 
+        ############################################################################
+        # Any data that needs to go back to Python needs to get into a Python.dict()
+        ############################################################################
+        # even though this is a lot of code right here inside the next function, I think
+        # it's better to keep the Python.dict() pretty localized because I think a lot of the
+        # overhead comes from dealing with Python objects.
+
         py_self[0].pydict.clear()
 
+        # check the "reply_once" Dicts every block
         for pf in py_self[0].world[].messengerManager.reply_once_float.take_items():
             py_self[0].pydict[pf.key] = pf.value
         
@@ -256,9 +264,11 @@ struct MMMAudioBridge(Representable, Movable):
         
         py_self[0].world[].messengerManager.reply_once_trig.clear()
 
-        # even though this is a lot of code right here inside the next function, I think
-        # it's better to keep the Python.dict() pretty localized because I think a lot of the
-        # overhead comes from dealing with Python objects.
+        # Check the "stream" Dicts every 10 blocks. This is a hard coded throttling of sending
+        # data back because otherwise it is way to much CPU (and not really necessary?)
+        # Perhaps in the future the "10" can be turned into a user defined parameter when they
+        # boot up an audio process. There might be times when a user would want to use the CPU
+        # to stream back data every block.
         if py_self[0].block_counter % 10 == 0: # Only send data to Python every 10 blocks to reduce overhead
                         
             # float
