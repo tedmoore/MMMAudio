@@ -47,7 +47,7 @@ struct Messenger(Copyable, Movable):
             name: A `String` to identify the value in Python.
             value: A `Float64` value to be sent to Python.
         """
-        if self.world[].bottom_of_block:
+        if self.world[].messengerManager.accepting_stream_data:
             try:
                 self.world[].messengerManager.reply_stream_float[self.get_name_with_namespace(name)[]] = value
             except error:
@@ -74,7 +74,7 @@ struct Messenger(Copyable, Movable):
             name: A `String` to identify the value in Python.
             value: A `List[Float64]` value to be sent to Python.
         """
-        if self.world[].bottom_of_block:
+        if self.world[].messengerManager.accepting_stream_data:
             try:
                 self.world[].messengerManager.reply_stream_floats[self.get_name_with_namespace(name)[]] = value.copy()
             except error:
@@ -101,7 +101,7 @@ struct Messenger(Copyable, Movable):
             name: A `String` to identify the value in Python.
             value: An `Int` value to be sent to Python.
         """
-        if self.world[].bottom_of_block:
+        if self.world[].messengerManager.accepting_stream_data:
             try:
                 self.world[].messengerManager.reply_stream_int[self.get_name_with_namespace(name)[]] = value
             except error:
@@ -128,7 +128,7 @@ struct Messenger(Copyable, Movable):
             name: A `String` to identify the value in Python.
             value: A `List[Int]` value to be sent to Python.
         """
-        if self.world[].bottom_of_block:
+        if self.world[].messengerManager.accepting_stream_data:
             try:
                 self.world[].messengerManager.reply_stream_ints[self.get_name_with_namespace(name)[]] = value.copy()
             except error:
@@ -155,7 +155,7 @@ struct Messenger(Copyable, Movable):
             name: A `String` to identify the value in Python.
             value: A `Bool` value to be sent to Python.
         """
-        if self.world[].bottom_of_block:
+        if self.world[].messengerManager.accepting_stream_data:
             try:
                 self.world[].messengerManager.reply_stream_bool[self.get_name_with_namespace(name)[]] = value
             except error:
@@ -180,7 +180,7 @@ struct Messenger(Copyable, Movable):
     #         name: A `String` to identify the value in Python.
     #         value: A `List[Bool]` value to be sent to Python.
     #     """
-    #     if self.world[].bottom_of_block:
+    #     if self.world[].messengerManager.accepting_stream_data:
     #         try:
     #             self.world[].messengerManager.reply_stream_bools[self.get_name_with_namespace(name)[]] = value.copy()
     #         except error:
@@ -193,7 +193,7 @@ struct Messenger(Copyable, Movable):
             name: A `String` to identify the value in Python.
             value: A `String` value to be sent to Python.
         """
-        if self.world[].bottom_of_block:
+        if self.world[].messengerManager.accepting_stream_data:
             try:
                 self.world[].messengerManager.reply_stream_string[self.get_name_with_namespace(name)[]] = value
             except error:
@@ -218,7 +218,7 @@ struct Messenger(Copyable, Movable):
             name: A `String` to identify the value in Python.
             value: A `List[String]` value to be sent to Python.
         """
-        if self.world[].bottom_of_block:
+        if self.world[].messengerManager.accepting_stream_data:
             try:
                 self.world[].messengerManager.reply_stream_strings[self.get_name_with_namespace(name)[]] = value.copy()
             except error:
@@ -735,6 +735,8 @@ struct MessengerManager(Movable, Copyable):
     var reply_once_strings: Dict[String, List[String]]
     var reply_once_trig: Set[String]
 
+    var accepting_stream_data: Bool
+
     fn __init__(out self):
 
         self.bool_msg_pool = Dict[String, Bool]()
@@ -785,6 +787,8 @@ struct MessengerManager(Movable, Copyable):
         self.reply_once_string = Dict[String, String]()
         self.reply_once_strings = Dict[String, List[String]]()
         self.reply_once_trig = Set[String]()
+
+        self.accepting_stream_data = False
         
     ##### Bool #####
     @always_inline
