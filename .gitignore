@@ -230,5 +230,4 @@ mine.worktrees
 testing_mmm_audio/outputs
 testing_mmm_audio/validation/mojo_results
 testing_mmm_audio/validation/validation_results
-testing_mmm_audio/validation/flucoma_sc_results
 
