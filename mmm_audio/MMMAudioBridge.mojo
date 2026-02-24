@@ -13,6 +13,7 @@ from examples.FeedbackDelays import FeedbackDelays
 struct MMMAudioBridge(Representable, Movable):
     var world: World
     var graph: FeedbackDelays  # The audio graph instance
+    var block_counter: Int
 
     @staticmethod
     fn py_init(out self: MMMAudioBridge, args: PythonObject, kwargs: PythonObject) raises:
@@ -37,6 +38,8 @@ struct MMMAudioBridge(Representable, Movable):
         self.world.init_pointee_move(MMMWorld(sample_rate, block_size, num_in_chans, num_out_chans))
 
         self.graph = FeedbackDelays(self.world)
+
+        self.block_counter = 0
 
     @staticmethod
     fn set_channel_count(py_selfA: PythonObject, args: PythonObject) raises -> PythonObject:
@@ -200,8 +203,10 @@ struct MMMAudioBridge(Representable, Movable):
                 loc_out_buffer[i * py_self[0].world[].num_out_chans + j] = 0.0 
 
         py_self[0].get_audio_samples(loc_in_buffer, loc_out_buffer)
+        
+        py_self[0].block_counter += 1
 
-        if len(py_self[0].world[].messengerManager.to_python_float) > 0:
+        if py_self[].block_counter % 10 == 0 and len(py_self[0].world[].messengerManager.to_python_float) > 0:
             return py_self[0].world[].messengerManager.to_python_float
         else:
             return PythonObject(None)  # Return a PythonObject wrapping None if there are no messages
