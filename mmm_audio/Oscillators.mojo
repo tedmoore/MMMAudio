@@ -726,9 +726,7 @@ struct Dust[num_chans: Int = 1] (Representable, Movable, Copyable):
         self.impulse.phase = phase
 
 struct LFNoise[num_chans: Int = 1, interp: Int = Interp.cubic](Representable, Movable, Copyable):
-    """Low-frequency interpolating noise generator.
-    
-    With stepped (none), linear, or cubic interpolation.
+    """Low-frequency interpolating noise generator generating numbers between -1.0 and 1.0. With stepped (none), linear, or cubic interpolation.
 
     Parameters:
         num_chans: Number of channels.
