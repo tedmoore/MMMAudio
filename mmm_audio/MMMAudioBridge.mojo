@@ -2,6 +2,7 @@
 # i don't want it to be in this directory, but it needs to be here due to a mojo compiler bug
 
 from python import PythonObject
+from python import Python
 from python.bindings import PythonModuleBuilder
 
 from os import abort
@@ -14,6 +15,7 @@ struct MMMAudioBridge(Representable, Movable):
     var world: World
     var graph: FeedbackDelays  # The audio graph instance
     var block_counter: Int
+    var np: PythonObject
 
     @staticmethod
     fn py_init(out self: MMMAudioBridge, args: PythonObject, kwargs: PythonObject) raises:
@@ -40,6 +42,13 @@ struct MMMAudioBridge(Representable, Movable):
         self.graph = FeedbackDelays(self.world)
 
         self.block_counter = 0
+
+        self.np = PythonObject(None)
+
+        try:
+            self.np = Python.import_module("numpy")
+        except error:
+            print("Error occurred while importing numpy. Error: ", error)
 
     @staticmethod
     fn set_channel_count(py_selfA: PythonObject, args: PythonObject) raises -> PythonObject:
@@ -201,14 +210,23 @@ struct MMMAudioBridge(Representable, Movable):
             for i in range(py_self[0].world[].block_size):
                 loc_out_buffer[i * py_self[0].world[].num_out_chans + j] = 0.0 
 
-        py_self[0].world[].messengerManager.to_python_dict.clear()  # Clear the to_python_dict dictionary at the start of each block
+        py_self[0].world[].messengerManager.to_python_float.clear()  # Clear the to_python_float dictionary at the start of each block
 
         py_self[0].get_audio_samples(loc_in_buffer, loc_out_buffer)
         
         py_self[0].block_counter += 1
 
-        if py_self[0].block_counter % 10 == 0 and len(py_self[0].world[].messengerManager.to_python_dict) > 0:
-            return py_self[0].world[].messengerManager.to_python_dict
+        if py_self[0].block_counter % 10 == 0:
+            pydict = Python.dict()
+            if len(py_self[0].world[].messengerManager.to_python_float) > 0:
+                for pf in py_self[0].world[].messengerManager.to_python_float.take_items():
+                    pydict[pf.key] = pf.value
+                for pfs in py_self[0].world[].messengerManager.to_python_floats.take_items():
+                    arr = py_self[0].np.empty(len(pfs.value))
+                    for i in range(len(pfs.value)):
+                        arr[i] = pfs.value[i]
+                    pydict[pfs.key] = arr
+                return pydict
         else:
             return PythonObject(None)  # Return a PythonObject wrapping None if there are no messages
 
