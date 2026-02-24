@@ -15,7 +15,6 @@ import asyncio
 
 import pyautogui
 
-
 class AudioCommand(IntEnum):
     STOP_PROCESS = 0
     START_AUDIO = 1
@@ -104,7 +103,18 @@ class MMMAudio:
         self.start_process()
 
     def register_callback(self, name: str, callback):
-        """Register a callback function that can be called from the audio process."""
+        """Register a callback function that can be called from the audio process.
+        
+        The function will be passed a single argument, which will be the data being sent from Mojo. The callback function will be called whenever the audio process sends a message with the corresponding name.
+
+        If Mojo is sending a List[Float64] the callback will be a numpy array of dtype float64.
+        If Mojo is sending a List[Int] the callback will be a numpy array of dtype int64.
+        Other Lists from Mojo will be sent as Python lists.
+        
+        Args:
+            name: The name of the callback.
+            callback: The function to call when the callback is triggered.
+        """
         self.callbacks[name] = callback
 
     def unregister_callback(self, name: str):

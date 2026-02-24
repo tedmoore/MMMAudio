@@ -1,7 +1,7 @@
 
 from mmm_audio import *
 
-struct TestToPython(Movable, Copyable):
+struct ToPythonExample(Movable, Copyable):
     var world: World
     var m: Messenger
     var yin: BufferedInput[YIN[1024],1024,512]
