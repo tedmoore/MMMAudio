@@ -217,6 +217,9 @@ struct MMMAudioBridge(Representable, Movable):
         
         py_self[0].block_counter += 1
 
+        # even though this is a lot of code right here inside the next function, I think
+        # it's better to keep the Python.dict() pretty localized because I think a lot of the
+        # overhead comes from dealing with Python objects.
         if py_self[0].block_counter % 10 == 0: # Only send data to Python every 10 blocks to reduce overhead
             pydict = Python.dict()
             for pf in py_self[0].world[].messengerManager.to_python_float.take_items():
