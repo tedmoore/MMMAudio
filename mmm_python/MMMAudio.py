@@ -28,6 +28,10 @@ class AudioCommand(IntEnum):
     SEND_STRINGS = 10
     GET_SAMPLES = 11
 
+class ResponseCommand(IntEnum):
+    SAMPLES = 0
+    CALLBACKS = 1
+
 class MMMAudio:
     """
     MMMAudio class that runs in its own dedicated process.
@@ -86,7 +90,18 @@ class MMMAudio:
         # Sample rate will be set when process initializes
         self.sample_rate = Value(ctypes.c_int, 0)
 
+        self.callbacks = {}
+
         self.start_process()
+
+    def register_callback(self, name: str, callback):
+        """Register a callback function that can be called from the audio process."""
+        self.callbacks[name] = callback
+
+    def unregister_callback(self, name: str):
+        """Unregister a previously registered callback function."""
+        if name in self.callbacks:
+            del self.callbacks[name]
         
     def start_process(self):
         """Start the audio process"""
@@ -207,7 +222,7 @@ class MMMAudio:
         # Wait for response
         try:
             response = self.response_queue.get(timeout=30.0)
-            if response[0] == "SAMPLES":
+            if response[0] == ResponseCommand.SAMPLES:
                 return response[1]
             else:
                 print(f"[Main] Unexpected response: {response[0]}")
@@ -401,11 +416,10 @@ class MMMAudio:
                 )
                 # Process through Mojo bridge
                 with bridge_lock:
-                    d = mmm_audio_bridge.next(in_array, out_buffer)
-                    if d:
-                        print(f"[PID {pid}] Received from Mojo: {d}")
-                        # sys.stdout.flush()
-                
+                    to_py_dict = mmm_audio_bridge.next(in_array, out_buffer)
+                    if to_py_dict:
+                        response_queue.put_nowait((ResponseCommand.CALLBACKS, to_py_dict))
+
                 out_buffer = np.clip(out_buffer, -1.0, 1.0)
                 output_bytes = out_buffer.astype(np.float32).tobytes()
                 
@@ -588,7 +602,7 @@ class MMMAudio:
                         if i * blocksize + j < samples:
                             waveform[i * blocksize + j] = temp_out[j]
 
-            response_queue.put(("SAMPLES", waveform))
+            response_queue.put((ResponseCommand.SAMPLES, waveform))
             return True
 
         command_handlers = [

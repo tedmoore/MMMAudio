@@ -5,4 +5,5 @@
 
 from mmm_python import *
 m = MMMAudio(128, graph_name="TestToPython", package_name="examples.tests")
+m.register_callback("pitch", lambda args: print(f"pitch: {args}"))
 m.start_audio()

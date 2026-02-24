@@ -203,7 +203,6 @@ struct MMMAudioBridge(Representable, Movable):
         if len(py_self[0].world[].messengerManager.to_python_float) > 0:
             d = Python.dict()
             for to_py_float in py_self[0].world[].messengerManager.to_python_float.take_items():
-                print("to_py_float: ",to_py_float.key, " = ", to_py_float.value)
                 d[to_py_float.key] = to_py_float.value
 
             # return PythonObject(None)  # Return a PythonObject wrapping the float value
