@@ -249,11 +249,11 @@ struct MMMAudioBridge(Representable, Movable):
                 pydict[pb.key] = pb.value
             
             # bools
-            for pbs in py_self[0].world[].messengerManager.to_python_bools.take_items():
-                arr = py_self[0].np.empty(len(pbs.value),dtype=py_self[0].np.bool_)
-                for i in range(len(pbs.value)):
-                    arr[i] = pbs.value[i]
-                pydict[pbs.key] = arr
+            # for pbs in py_self[0].world[].messengerManager.to_python_bools.take_items():
+            #     arr = py_self[0].np.empty(len(pbs.value),dtype=py_self[0].np.bool_)
+            #     for i in range(len(pbs.value)):
+            #         arr[i] = pbs.value[i]
+            #     pydict[pbs.key] = arr
             
             # string
             for ps in py_self[0].world[].messengerManager.to_python_string.take_items():

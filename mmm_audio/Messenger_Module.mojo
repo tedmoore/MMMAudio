@@ -97,18 +97,18 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while sending bool to python. Error: ", error)
 
-    fn to_python(mut self, name: String, value: List[Bool]):
-        """Send a List[Bool] value to Python under the specified name.
+    # fn to_python(mut self, name: String, value: List[Bool]):
+    #     """Send a List[Bool] value to Python under the specified name.
 
-        Args:
-            name: A `String` to identify the value in Python.
-            value: A `List[Bool]` value to be sent to Python.
-        """
-        if self.world[].bottom_of_block:
-            try:
-                self.world[].messengerManager.to_python_bools[self.get_name_with_namespace(name)[]] = value.copy()
-            except error:
-                print("Error occurred while sending bool list to python. Error: ", error)
+    #     Args:
+    #         name: A `String` to identify the value in Python.
+    #         value: A `List[Bool]` value to be sent to Python.
+    #     """
+    #     if self.world[].bottom_of_block:
+    #         try:
+    #             self.world[].messengerManager.to_python_bools[self.get_name_with_namespace(name)[]] = value.copy()
+    #         except error:
+    #             print("Error occurred while sending bool list to python. Error: ", error)
 
     fn to_python(mut self, name: String, value: String):
         """Send a String value to Python under the specified name.
@@ -621,7 +621,7 @@ struct MessengerManager(Movable, Copyable):
     var to_python_int: Dict[String, Int]
     var to_python_ints: Dict[String, List[Int]]
     var to_python_bool: Dict[String, Bool]
-    var to_python_bools: Dict[String, List[Bool]]
+    # var to_python_bools: Dict[String, List[Bool]]
     var to_python_string: Dict[String, String]
     var to_python_strings: Dict[String, List[String]]
     var to_python_trig: Set[String]
@@ -663,7 +663,7 @@ struct MessengerManager(Movable, Copyable):
         self.to_python_int = Dict[String, Int]()
         self.to_python_ints = Dict[String, List[Int]]()
         self.to_python_bool = Dict[String, Bool]()
-        self.to_python_bools = Dict[String, List[Bool]]()
+        # self.to_python_bools = Dict[String, List[Bool]]()
         self.to_python_string = Dict[String, String]()
         self.to_python_strings = Dict[String, List[String]]()
         self.to_python_trig = Set[String]()
