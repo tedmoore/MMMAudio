@@ -191,10 +191,8 @@ struct OscType:
     | OscType.triangle             | 1     |
     | OscType.saw                  | 2     |
     | OscType.square               | 3     |
-    | OscType.basic_waveforms      | 4     |
     """
     comptime sine: Int = 0
     comptime triangle: Int = 1
     comptime saw: Int = 2
     comptime square: Int = 3
-    comptime basic_waveforms: Int = 4
