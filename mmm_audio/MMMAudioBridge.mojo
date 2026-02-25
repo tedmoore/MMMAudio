@@ -176,7 +176,6 @@ struct MMMAudioBridge(Representable, Movable):
     fn get_audio_samples(mut self, loc_in_buffer: MutUnsafePointer[Float32], mut loc_out_buffer: MutUnsafePointer[Float64]) raises:
 
         self.world[].top_of_block = True
-        self.world[].bottom_of_block = False
         self.world[].messengerManager.transfer_msgs()
         self.world[].messengerManager.accepting_stream_data = False
         
@@ -187,7 +186,11 @@ struct MMMAudioBridge(Representable, Movable):
                 self.world[].top_of_block = False
                 self.world[].messengerManager.empty_msg_dicts()
             elif i == self.world[].block_size - 1 and self.block_counter % 10 == 0:
-                # self.world[].bottom_of_block = True
+                # Add to the "stream" Dicts every 10 blocks. This is a hard coded throttling of sending
+                # data back because otherwise it is way to much CPU (and not really necessary?)
+                # Perhaps in the future the "10" can be turned into a user defined parameter when they
+                # boot up an audio process. There might be times when a user would want to use the CPU
+                # to stream back data every block.
                 self.world[].messengerManager.accepting_stream_data = True
 
             if self.world[].top_of_block:
@@ -266,12 +269,7 @@ struct MMMAudioBridge(Representable, Movable):
         
         py_self[0].world[].messengerManager.reply_once_trig.clear()
 
-        # Check the "stream" Dicts every 10 blocks. This is a hard coded throttling of sending
-        # data back because otherwise it is way to much CPU (and not really necessary?)
-        # Perhaps in the future the "10" can be turned into a user defined parameter when they
-        # boot up an audio process. There might be times when a user would want to use the CPU
-        # to stream back data every block.
-        if py_self[0].world[].messengerManager.accepting_stream_data: # Only send data to Python every 10 blocks to reduce overhead
+        if py_self[0].world[].messengerManager.accepting_stream_data:
                         
             # float
             for pf in py_self[0].world[].messengerManager.reply_stream_float.take_items():
