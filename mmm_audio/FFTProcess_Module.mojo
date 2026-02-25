@@ -41,6 +41,10 @@ struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessa
     @doc_private
     fn get_messages(mut self) -> None:
         self.process.get_messages()
+    
+    @doc_private
+    fn send_streams(mut self) -> None:
+        self.process.send_streams()
 
 trait FFTProcessable(Movable,Copyable):
     """Implement this trait in a custom struct to pass to `FFTProcess`
@@ -54,6 +58,8 @@ trait FFTProcessable(Movable,Copyable):
     fn next_stereo_frame(mut self, mut magnitudes: List[SIMD[DType.float64,2]], mut phases: List[SIMD[DType.float64,2]]) -> None:
         return None
     fn get_messages(mut self) -> None:
+        return None
+    fn send_streams(mut self) -> None:
         return None
 
 struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Int = WindowType.hann, output_window_shape: Int = WindowType.hann](Movable,Copyable):

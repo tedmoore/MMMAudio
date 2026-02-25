@@ -27,6 +27,9 @@ trait BufferedProcessable(Movable, Copyable):
     fn get_messages(mut self) -> None:
         return None
 
+    fn send_streams(mut self) -> None:
+        return None
+
 struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Int = WindowType.hann](Movable, Copyable):
     """Buffers input samples and hands them over to be processed in 'windows'.
 
@@ -161,6 +164,9 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         """
         if self.world[].top_of_block:
             self.process.get_messages()
+        
+        if self.world[].messengerManager.accepting_stream_data:
+            self.process.send_streams()
     
         self.input_buffer[self.input_buffer_write_head] = input
         self.input_buffer[self.input_buffer_write_head + Self.window_size] = input
