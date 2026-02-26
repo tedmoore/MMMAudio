@@ -14,7 +14,6 @@ class SignalEmitter(QObject):
     """Helper class to emit signals from the audio callback thread."""
     data_ready = Signal(object)
 
-
 class SpectrogramGraphicsView(QGraphicsView):
     """Graphics view that displays magnitude data as bars."""
     
