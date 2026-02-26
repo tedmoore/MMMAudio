@@ -9,32 +9,23 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QGraphicsView, QGraphic
 from PySide6.QtCore import Signal, QObject, Qt
 from PySide6.QtGui import QBrush, QPen, QColor
 
-
-class SignalEmitter(QObject):
-    """Helper class to emit signals from the audio callback thread."""
-    data_ready = Signal(object)
-
 class SpectrogramGraphicsView(QGraphicsView):
-    """Graphics view that displays magnitude data as bars."""
     
     def __init__(self, num_bars=513, parent=None):
         super().__init__(parent)
         self.num_bars = num_bars
         self.bar_height = 400
         
-        # Create scene
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
         
-        # Set up view properties
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setRenderHint(self.renderHints().Antialiasing, False)  # Disable for performance
+        self.setRenderHint(self.renderHints().Antialiasing, False)
         self.setViewportUpdateMode(QGraphicsView.MinimalViewportUpdate)
         self.setOptimizationFlags(QGraphicsView.DontSavePainterState)
         self.setBackgroundBrush(QBrush(QColor(0, 0, 0)))
         
-        # Create bar items
         self.bars = []
         self.bar_width = 800 / num_bars
         brush = QBrush(QColor(255, 255, 255))
@@ -48,55 +39,38 @@ class SpectrogramGraphicsView(QGraphicsView):
             self.scene.addItem(bar)
             self.bars.append(bar)
         
-        # Set scene rect
         self.scene.setSceneRect(0, 0, 800, self.bar_height)
         self.setMinimumSize(800, 400)
     
     def update_data(self, data):
-        """Update the bar heights from magnitude data."""
-        if isinstance(data, np.ndarray):
-            magnitudes = data
-        else:
-            magnitudes = np.array(data)
-        
-        # Update each bar's height and position
-        for i, mag in enumerate(magnitudes[:self.num_bars]):
-            # Normalize magnitude
+        for i, mag in enumerate(data):
             normalized = mag / 15.0
             bar_height = normalized * self.bar_height
             
-            # Update bar geometry (grows upward from bottom)
             self.bars[i].setRect(0, 0, self.bar_width, bar_height)
             self.bars[i].setPos(i * self.bar_width, self.bar_height - bar_height)
     
     def resizeEvent(self, event):
-        """Handle resize to scale the view."""
         super().resizeEvent(event)
         self.fitInView(self.scene.sceneRect(), Qt.IgnoreAspectRatio)
 
 
 class SpectrogramWindow(QMainWindow):
-    """Main window containing the spectrogram display."""
-    
+    data_ready = Signal(object)
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Real-time Spectrogram")
         
-        # Create the graphics view widget
         self.spectrogram_widget = SpectrogramGraphicsView(num_bars=513)
         self.setCentralWidget(self.spectrogram_widget)
         
-        # Create signal emitter for thread-safe updates
-        self.signal_emitter = SignalEmitter()
-        self.signal_emitter.data_ready.connect(self.spectrogram_widget.update_data)
+        self.data_ready.connect(self.spectrogram_widget.update_data)
         
     def callback(self, args):
-        """Callback function to receive magnitude data."""
-        # Emit signal to update GUI in main thread
-        self.signal_emitter.data_ready.emit(args)
+        self.data_ready.emit(args)
     
     def closeEvent(self, event):
-        """Handle window close event."""
         QApplication.quit()
         event.accept()
 
