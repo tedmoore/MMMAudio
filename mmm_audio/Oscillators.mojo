@@ -45,10 +45,11 @@ struct Phasor[num_chans: Int = 1, os_index: Int = 0](Representable, Movable, Cop
     @doc_private
     @always_inline
     fn _increment_phase_impulse(mut self, freq: SIMD[DType.float64, self.num_chans], phase_offset: SIMD[DType.float64, self.num_chans] = 0.0) -> SIMD[DType.bool, Self.num_chans]:
-        self.phase += (freq * self.freq_mul)
+        """Increments the phase and returns a boolean SIMD indicating when the phase wraps around from 1.0 to 0.0, which is when an impulse would occur. This only works with possive frequencies and phase offsets between 0.0 and 1.0."""
+
+        self.phase += (abs(freq) * self.freq_mul)
         fl = floor(self.phase)
-        # this is not correct
-        rbd = self.rising_bool_detector_impulse.next(abs(self.phase+phase_offset).gt(1.0)) #or bs(self.phase+phase_offset).lt(0.0))
+        rbd = self.rising_bool_detector_impulse.next(abs(self.phase+clip(phase_offset, 0.0, 1.0)).gt(1.0))
         self.phase = self.phase - fl 
         return rbd
 
@@ -73,7 +74,7 @@ struct Phasor[num_chans: Int = 1, os_index: Int = 0](Representable, Movable, Cop
 
     @always_inline
     fn next_bool(mut self, freq: SIMD[DType.float64, self.num_chans] = 100.0, phase_offset: SIMD[DType.float64, self.num_chans] = 0.0, trig: SIMD[DType.bool, self.num_chans] = SIMD[DType.bool, self.num_chans](fill=True)) -> SIMD[DType.bool, self.num_chans]:
-        """Increments the phasor and returns a boolean impulse when the phase wraps around from 1.0 to 0.0.
+        """Increments the phasor and returns a boolean impulse when the phase wraps around from 1.0 to 0.0. This only works with possive frequencies and phase offsets between 0.0 and 1.0.
 
         Args:
           freq: Frequency of the phasor in Hz (default is 100.0).
@@ -92,7 +93,7 @@ struct Phasor[num_chans: Int = 1, os_index: Int = 0](Representable, Movable, Cop
 
     @always_inline
     fn next_impulse(mut self, freq: SIMD[DType.float64, self.num_chans] = 100.0, phase_offset: SIMD[DType.float64, self.num_chans] = 0.0, trig: SIMD[DType.bool, self.num_chans] = SIMD[DType.bool, self.num_chans](fill=   True)) -> SIMD[DType.float64, self.num_chans]:
-        """Generates an impulse waveform where the output is 1.0 for one sample when the phase wraps around from 1.0 to 0.0, and 0.0 otherwise.
+        """Generates an impulse waveform where the output is 1.0 for one sample when the phase wraps around from 1.0 to 0.0, and 0.0 otherwise. This only works with possive frequencies and phase offsets between 0.0 and 1.0.
 
         Args:
           freq: Frequency of the phasor in Hz (default is 100.0).
