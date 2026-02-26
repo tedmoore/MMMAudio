@@ -72,7 +72,7 @@ fn splay[num_simd: Int](input: List[SIMD[DType.float64, num_simd]], world: World
                         mask=255
                     ](
                         world = world,
-                        data=world[].windows.pan2,
+                        data=world[].windows[].pan2,
                         f_idx=pan * 255.0
                     )
             out += input[index0][index1] * pan_mul
@@ -106,7 +106,7 @@ fn splay[num_input_channels: Int](input: SIMD[DType.float64, num_input_channels]
                         mask=255
                     ](
                         world = world,
-                        data=world[].windows.pan2,
+                        data=world[].windows[].pan2,
                         f_idx=pan * 255.0
                     )
             out += input[i] * pan_mul

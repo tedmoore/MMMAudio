@@ -47,7 +47,8 @@ struct Phasor[num_chans: Int = 1, os_index: Int = 0](Representable, Movable, Cop
     fn _increment_phase_impulse(mut self, freq: SIMD[DType.float64, self.num_chans], phase_offset: SIMD[DType.float64, self.num_chans] = 0.0) -> SIMD[DType.bool, Self.num_chans]:
         self.phase += (freq * self.freq_mul)
         fl = floor(self.phase)
-        rbd = self.rising_bool_detector_impulse.next(abs(self.phase+phase_offset).gt(1.0))
+        # this is not correct
+        rbd = self.rising_bool_detector_impulse.next(abs(self.phase+phase_offset).gt(1.0)) #or bs(self.phase+phase_offset).lt(0.0))
         self.phase = self.phase - fl 
         return rbd
 
@@ -230,7 +231,7 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](R
                         mask=OscBuffersMask
                     ](
                         world = self.world,
-                        data=self.world[].osc_buffers.buffers[osc_type[chan]],
+                        data=self.world[].osc_buffers[].buffers[osc_type[chan]],
                         f_idx=phase[chan] * OscBuffersSize,
                         prev_f_idx=self.last_phase[chan] * OscBuffersSize
                     )
@@ -252,7 +253,7 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](R
                         mask=OscBuffersMask
                     ](
                         world = self.world,
-                        data=self.world[].osc_buffers.buffers[osc_type[chan]],
+                        data=self.world[].osc_buffers[].buffers[osc_type[chan]],
                         f_idx=phase[chan] * OscBuffersSize,
                         prev_f_idx=self.last_phase[chan] * OscBuffersSize
                     )
@@ -278,7 +279,7 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](R
             mask=OscBuffersMask
         ](
             world = self.world,
-            data=self.world[].osc_buffers.basic_waveforms,
+            data=self.world[].osc_buffers[].basic_waveforms,
             f_idx=phase * OscBuffersSize,
             prev_f_idx=last_phase * OscBuffersSize
         )
