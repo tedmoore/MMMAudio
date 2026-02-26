@@ -5,61 +5,75 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from mmm_python import *
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget
-from PySide6.QtCore import Signal, QObject, Qt, QTimer
-from PySide6.QtGui import QPainter, QColor, QPen
+from PySide6.QtWidgets import QApplication, QMainWindow, QGraphicsView, QGraphicsScene, QGraphicsRectItem
+from PySide6.QtCore import Signal, QObject, Qt
+from PySide6.QtGui import QBrush, QPen, QColor
 
 
 class SignalEmitter(QObject):
     """Helper class to emit signals from the audio callback thread."""
     data_ready = Signal(object)
 
-class SpectrogramWidget(QWidget):
-    """Widget that displays magnitude data as a bar graph."""
-    
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.magnitudes = np.zeros(513)
-        self.setMinimumSize(800, 400)
-        self.color = QColor(255, 255, 255)
 
+class SpectrogramGraphicsView(QGraphicsView):
+    """Graphics view that displays magnitude data as bars."""
+    
+    def __init__(self, num_bars=513, parent=None):
+        super().__init__(parent)
+        self.num_bars = num_bars
+        self.bar_height = 400
         
+        # Create scene
+        self.scene = QGraphicsScene(self)
+        self.setScene(self.scene)
+        
+        # Set up view properties
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setRenderHint(self.renderHints().Antialiasing, False)  # Disable for performance
+        self.setViewportUpdateMode(QGraphicsView.MinimalViewportUpdate)
+        self.setOptimizationFlags(QGraphicsView.DontSavePainterState)
+        self.setBackgroundBrush(QBrush(QColor(0, 0, 0)))
+        
+        # Create bar items
+        self.bars = []
+        self.bar_width = 800 / num_bars
+        brush = QBrush(QColor(255, 255, 255))
+        pen = QPen(Qt.NoPen)
+        
+        for i in range(num_bars):
+            bar = QGraphicsRectItem(0, 0, self.bar_width, 0)
+            bar.setBrush(brush)
+            bar.setPen(pen)
+            bar.setPos(i * self.bar_width, self.bar_height)
+            self.scene.addItem(bar)
+            self.bars.append(bar)
+        
+        # Set scene rect
+        self.scene.setSceneRect(0, 0, 800, self.bar_height)
+        self.setMinimumSize(800, 400)
+    
     def update_data(self, data):
-        """Update the magnitude data and trigger a repaint."""
+        """Update the bar heights from magnitude data."""
         if isinstance(data, np.ndarray):
-            self.magnitudes = data
+            magnitudes = data
         else:
-            self.magnitudes = np.array(data)
-        self.update()  # Trigger paintEvent
+            magnitudes = np.array(data)
         
-    def paintEvent(self, event):
-        """Draw the bar graph."""
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-        
-        # Get widget dimensions
-        width = self.width()
-        height = self.height()
-        
-        # Calculate bar width
-        num_bars = len(self.magnitudes)
-        bar_width = width / num_bars
-                
-        # Draw bars
-        for i, mag in enumerate(self.magnitudes):
-            # Normalize to 0-1 range
+        # Update each bar's height and position
+        for i, mag in enumerate(magnitudes[:self.num_bars]):
+            # Normalize magnitude
             normalized = mag / 15.0
+            bar_height = normalized * self.bar_height
             
-            # Calculate bar height (inverted so high values are at top)
-            bar_height = normalized * height
-            
-            painter.setPen(QPen(self.color, max(bar_width, 1)))
-            painter.setBrush(self.color)
-            
-            # Draw bar from bottom to top
-            x = i * bar_width
-            y = height - bar_height
-            painter.drawRect(int(x), int(y), max(int(bar_width), 1), int(bar_height))
+            # Update bar geometry (grows upward from bottom)
+            self.bars[i].setRect(0, 0, self.bar_width, bar_height)
+            self.bars[i].setPos(i * self.bar_width, self.bar_height - bar_height)
+    
+    def resizeEvent(self, event):
+        """Handle resize to scale the view."""
+        super().resizeEvent(event)
+        self.fitInView(self.scene.sceneRect(), Qt.IgnoreAspectRatio)
 
 
 class SpectrogramWindow(QMainWindow):
@@ -69,8 +83,8 @@ class SpectrogramWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Real-time Spectrogram")
         
-        # Create the spectrogram widget
-        self.spectrogram_widget = SpectrogramWidget()
+        # Create the graphics view widget
+        self.spectrogram_widget = SpectrogramGraphicsView(num_bars=513)
         self.setCentralWidget(self.spectrogram_widget)
         
         # Create signal emitter for thread-safe updates
@@ -86,6 +100,7 @@ class SpectrogramWindow(QMainWindow):
         """Handle window close event."""
         QApplication.quit()
         event.accept()
+
 
 if __name__ == "__main__":
     
