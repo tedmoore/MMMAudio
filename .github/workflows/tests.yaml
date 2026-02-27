@@ -67,5 +67,6 @@ jobs:
       - name: Run Tests Using Dummy Audio Devices
         env:
           SKIP_PYAUTOGUI: "1"
+          SKIP_GUI: "1"
         run: |
           python testing_mmm_audio/py_unit_tests/MessengerRoundTripTest.py
