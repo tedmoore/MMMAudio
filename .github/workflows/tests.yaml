@@ -46,6 +46,17 @@ jobs:
       #   run: |
       #     python testing_mmm_audio/validation/validate_against_snapshot.py
       
-      - name: Set up ALSA loopback dummy device for PortAudio
+      - name: Set up dummy audio devices (PulseAudio null sink)
         run: |
-          sudo modprobe snd-aloop
+          sudo apt-get update
+          sudo apt-get install -y pulseaudio pulseaudio-utils dbus-x11
+          eval "$(dbus-launch --sh-syntax)"
+          export DBUS_SESSION_BUS_ADDRESS
+          pulseaudio --start
+          sleep 2
+          pactl load-module module-null-sink sink_name=dummy_out sink_properties=device.description="Dummy_Output"
+          pactl set-default-sink dummy_out
+          DUMMY_SRC=$(pactl list short sources | awk '/dummy_out.monitor/ {print $2}')
+          pactl set-default-source "$DUMMY_SRC"
+          env:
+          PULSE_SERVER: unix:/run/user/$(id -u)/pulse/native
