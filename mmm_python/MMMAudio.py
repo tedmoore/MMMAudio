@@ -12,8 +12,13 @@ from enum import IntEnum
 import mojo.importer
 import threading
 import asyncio
+import os
 
-import pyautogui
+SKIP_PYAUTOGUI = os.getenv("SKIP_PYAUTOGUI", "0") == "1"
+if SKIP_PYAUTOGUI:
+    pyautogui = None
+else:
+    import pyautogui
 
 class AudioCommand(IntEnum):
     STOP_PROCESS = 0
@@ -379,7 +384,10 @@ class MMMAudio:
         import asyncio
         import threading
         from math import ceil
-        import pyautogui
+        if not SKIP_PYAUTOGUI:
+            import pyautogui
+        else:
+            print("[Audio Process] pyautogui is disabled, mouse position will not be tracked.")
         import queue
         
         pid = os.getpid()
@@ -452,7 +460,10 @@ class MMMAudio:
         mmm_audio_bridge = MMMAudioBridge.MMMAudioBridge(sample_rate, blocksize)
         mmm_audio_bridge.set_channel_count((actual_input_channels, actual_output_channels))
         
-        screen_dims = pyautogui.size()
+        if not SKIP_PYAUTOGUI:
+            screen_dims = pyautogui.size()
+        else:
+            screen_dims = (10, 10)  # Dummy value since we're not tracking mouse
         mmm_audio_bridge.set_screen_dims(screen_dims)
         
         # =========================================================================
@@ -531,9 +542,12 @@ class MMMAudio:
         async def get_mouse_position(delay: float = 0.01):
             while not stop_flag.is_set():
                 try:
-                    x, y = pyautogui.position()
-                    x = x / pyautogui.size().width
-                    y = y / pyautogui.size().height
+                    if not SKIP_PYAUTOGUI:
+                        x, y = pyautogui.position()
+                        x = x / pyautogui.size().width
+                        y = y / pyautogui.size().height
+                    else:
+                        x, y = 0.0, 0.0  # Dummy values since we're not tracking mouse
                     with bridge_lock:
                         mmm_audio_bridge.update_mouse_pos([x, y])
                 except:

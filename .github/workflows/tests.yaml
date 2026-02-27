@@ -65,5 +65,7 @@ jobs:
           pactl set-default-source "$DUMMY_SRC"
       
       - name: Run Tests Using Dummy Audio Devices
+        env:
+          SKIP_PYAUTOGUI: "1"
         run: |
           python testing_mmm_audio/py_unit_tests/MessengerRoundTripTest.py
