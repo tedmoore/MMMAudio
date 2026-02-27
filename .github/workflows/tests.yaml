@@ -20,14 +20,14 @@ jobs:
         with:
           python-version: '3.13'
 
-      # - name: Install Mojo
-      #   run: |
-      #     python -m pip install --upgrade pip
-      #     pip install mojo==0.26.1
+      - name: Install Mojo
+        run: |
+          python -m pip install --upgrade pip
+          pip install mojo==0.26.1
 
-      # - name: Install Python Dependencies
-      #   run: |
-      #     pip install librosa numpy matplotlib scipy
+      - name: Install Python Dependencies
+        run: |
+          pip install librosa numpy matplotlib scipy pyaudio
 
       # - name: Create Librosa Results for Testing Against
       #   run: |
@@ -58,3 +58,7 @@ jobs:
           pactl set-default-sink dummy_out
           DUMMY_SRC=$(pactl list short sources | awk '/dummy_out.monitor/ {print $2}')
           pactl set-default-source "$DUMMY_SRC"
+      
+      - name: Run Tests Using Dummy Audio Devices
+        run: |
+          python testing_mmm_audio/py_unit_tests/MessengerRoundTripTest.py
