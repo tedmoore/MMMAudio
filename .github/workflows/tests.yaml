@@ -32,7 +32,7 @@ jobs:
 
       - name: Install Python Dependencies
         run: |
-          pip install librosa numpy matplotlib scipy PyAudio
+          pip install librosa numpy matplotlib scipy PyAudio pyautogui mido python-osc python-rtmidi 
 
       # - name: Create Librosa Results for Testing Against
       #   run: |
