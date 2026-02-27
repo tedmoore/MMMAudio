@@ -15,7 +15,7 @@ struct MMMWorld(Movable, Copyable):
     """
     var sample_rate: Float64
     var block_size: Int
-    var osc_buffers: OscBuffers
+    var osc_buffers: UnsafePointer[mut=True, OscBuffers, MutExternalOrigin]
     var num_in_chans: Int
     var num_out_chans: Int
 
@@ -32,7 +32,7 @@ struct MMMWorld(Movable, Copyable):
     var top_of_block: Bool
     
     # windows
-    var windows: Windows
+    var windows: UnsafePointer[mut=True, Windows, MutExternalOrigin]
 
     var sinc_interpolator: SincInterpolator[4, 14]
 
@@ -44,7 +44,7 @@ struct MMMWorld(Movable, Copyable):
 
     var print_counter: UInt16
 
-    fn __init__(out self, sample_rate: Float64 = 48000.0, block_size: Int = 64, num_in_chans: Int = 2, num_out_chans: Int = 2):
+    fn __init__(out self, sample_rate: Float64 = 48000.0, block_size: Int = 64, num_in_chans: Int = 2, num_out_chans: Int = 2, osc_buffers_ptr: UnsafePointer[mut=True, OscBuffers, MutExternalOrigin] = UnsafePointer[mut=True, OscBuffers, MutExternalOrigin](), windows_ptr: UnsafePointer[mut=True, Windows, MutExternalOrigin] = UnsafePointer[mut=True, Windows, MutExternalOrigin]()):
         """Initializes the MMMWorld struct.
 
         Args:
@@ -52,6 +52,8 @@ struct MMMWorld(Movable, Copyable):
             block_size: The audio block size.
             num_in_chans: The number of input channels.
             num_out_chans: The number of output channels.
+            osc_buffers_ptr: A pointer to the OscBuffers struct, which holds precomputed oscillator waveforms.
+            windows_ptr: A pointer to the Windows struct, which holds precomputed window functions.
         """
         
         self.sample_rate = sample_rate
@@ -63,7 +65,8 @@ struct MMMWorld(Movable, Copyable):
         for _ in range(self.num_in_chans):
             self.sound_in.append(0.0)  # Initialize input buffer with zeros
 
-        self.osc_buffers = OscBuffers()
+        self.osc_buffers = osc_buffers_ptr
+        self.windows = windows_ptr
 
         self.os_multiplier = List[Float64]()  # Initialize the list of multipliers
         for i in range(5):  # Initialize multipliers for oversampling ratios
@@ -85,7 +88,6 @@ struct MMMWorld(Movable, Copyable):
         self.print_counter = 0
 
         self.sinc_interpolator = SincInterpolator[4,14]()
-        self.windows = Windows()
 
         print("MMMWorld initialized with sample rate:", self.sample_rate, "and block size:", self.block_size)
 

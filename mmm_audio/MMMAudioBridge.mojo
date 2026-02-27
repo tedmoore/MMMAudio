@@ -17,6 +17,8 @@ struct MMMAudioBridge(Representable, Movable):
     var block_counter: Int # count how many blocks this audio thread has been alive
     var np: PythonObject # an instance of numpy for sending np arrays back to python
     var pydict: PythonObject # a Python dictionary for sending messages back to python
+    var osc_buffers: UnsafePointer[mut=True, OscBuffers, MutExternalOrigin] 
+    var windows: UnsafePointer[mut=True, Windows, MutExternalOrigin] 
 
     @staticmethod
     fn py_init(out self: MMMAudioBridge, args: PythonObject, kwargs: PythonObject) raises:
@@ -37,8 +39,13 @@ struct MMMAudioBridge(Representable, Movable):
     fn __init__(out self, sample_rate: Float64 = 44100.0, block_size: Int = 512, num_in_chans: Int = 12, num_out_chans: Int = 12):
         """Initialize the audio engine with sample rate, block size, and number of channels."""
 
+        self.osc_buffers = alloc[OscBuffers](1)
+        self.osc_buffers.init_pointee_move(OscBuffers())
+        self.windows = alloc[Windows](1)
+        self.windows.init_pointee_move(Windows())
+
         self.world = alloc[MMMWorld](1) 
-        self.world.init_pointee_move(MMMWorld(sample_rate, block_size, num_in_chans, num_out_chans))
+        self.world.init_pointee_move(MMMWorld(sample_rate, block_size, num_in_chans, num_out_chans, self.osc_buffers, self.windows))
 
         self.graph = FeedbackDelays(self.world)
 
