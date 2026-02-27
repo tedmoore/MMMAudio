@@ -68,5 +68,10 @@ jobs:
         env:
           SKIP_PYAUTOGUI: "1"
           SKIP_GUI: "1"
+          PULSE_SERVER: unix:/run/user/$(id -u)/pulse/native
+          SDL_AUDIODRIVER: pulse
+          PA_ALSA_PLUGHW: "0"
+          AUDIODEV: pulse
+          JACK_NO_START_SERVER: "1"
         run: |
           python testing_mmm_audio/py_unit_tests/MessengerRoundTripTest.py
