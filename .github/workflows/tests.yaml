@@ -58,5 +58,3 @@ jobs:
           pactl set-default-sink dummy_out
           DUMMY_SRC=$(pactl list short sources | awk '/dummy_out.monitor/ {print $2}')
           pactl set-default-source "$DUMMY_SRC"
-          env:
-          PULSE_SERVER: unix:/run/user/$(id -u)/pulse/native
