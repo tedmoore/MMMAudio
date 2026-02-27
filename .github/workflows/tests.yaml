@@ -45,3 +45,7 @@ jobs:
       - name: Validate Against Snapshots
         run: |
           python testing_mmm_audio/validation/validate_against_snapshot.py
+      
+      - name: Set up ALSA loopback dummy device for PortAudio
+        run: |
+          sudo modprobe snd-aloop
