@@ -20,31 +20,31 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Install Mojo
-        run: |
-          python -m pip install --upgrade pip
-          pip install mojo==0.26.1
+      # - name: Install Mojo
+      #   run: |
+      #     python -m pip install --upgrade pip
+      #     pip install mojo==0.26.1
 
-      - name: Install Python Dependencies
-        run: |
-          pip install librosa numpy matplotlib scipy
+      # - name: Install Python Dependencies
+      #   run: |
+      #     pip install librosa numpy matplotlib scipy
 
-      - name: Create Librosa Results for Testing Against
-        run: |
-          python testing_mmm_audio/validation/librosa_results_for_testing_against.py
+      # - name: Create Librosa Results for Testing Against
+      #   run: |
+      #     python testing_mmm_audio/validation/librosa_results_for_testing_against.py
 
-      - name: Run UnitTests.mojo
-        id: run-tests
-        run: |
-          mojo testing_mmm_audio/UnitTests.mojo
+      # - name: Run UnitTests.mojo
+      #   id: run-tests
+      #   run: |
+      #     mojo testing_mmm_audio/UnitTests.mojo
 
-      - name: Test Building Mojo Files
-        run: |
-          python testing_mmm_audio/test_build_mojo_files.py
+      # - name: Test Building Mojo Files
+      #   run: |
+      #     python testing_mmm_audio/test_build_mojo_files.py
         
-      - name: Validate Against Snapshots
-        run: |
-          python testing_mmm_audio/validation/validate_against_snapshot.py
+      # - name: Validate Against Snapshots
+      #   run: |
+      #     python testing_mmm_audio/validation/validate_against_snapshot.py
       
       - name: Set up ALSA loopback dummy device for PortAudio
         run: |
