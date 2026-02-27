@@ -27,7 +27,7 @@ jobs:
 
       - name: Install Python Dependencies
         run: |
-          pip install librosa numpy matplotlib scipy pyaudio
+          pip install librosa numpy matplotlib scipy PyAudio
 
       # - name: Create Librosa Results for Testing Against
       #   run: |
